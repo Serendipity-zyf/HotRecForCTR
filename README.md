@@ -13,7 +13,11 @@ This repository contains implementations of common ranking models for Click-Thro
 │   ├── config.py          # Configuration parameters
 │   └── lr_gbdt.py         # LR-GBDT model implementation
 └── dl-based/              # Deep learning based models
-    └── fm.ipynb           # Factorization Machine implementation
+    ├── utils/             # Utility modules
+    │   ├── logger.py      # Custom colored logging utility
+    │   └── progress.py    # Enhanced progress bar utilities
+    ├── __init__.py        # Package initialization
+    └── demo_utils.py      # Demo for progress bar utilities
 ```
 
 ## Models Implemented
@@ -27,9 +31,19 @@ This repository contains implementations of common ranking models for Click-Thro
 
 ### Deep Learning Based Models
 
+- **Utility Modules**
+  - **ColorLogger**: A custom logger with colored output using colorama
+    - Provides different log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL) with distinct colors
+    - Supports formatted log messages with arguments
+    - Configurable timestamp format and output stream
+  - **ProgressBar**: Enhanced progress bar utilities using alive_progress
+    - Class-based implementation with context manager support
+    - Supports processing items with progress tracking
+    - Provides timed progress bars and multi-task progress tracking
+    - Customizable spinner styles, bar styles, and colors
+
 - **FM (Factorization Machines)**
-  - A model that can capture pairwise feature interactions
-  - Implemented in a Jupyter notebook for interactive exploration
+  - A model that can capture pairwise feature interactions (planned implementation)
 
 ## Dataset
 
@@ -43,6 +57,21 @@ The dataset is preprocessed in `data/data_process.ipynb`, which includes:
 - Handling missing values
 - Feature encoding
 - Saving processed data in parquet format
+
+## Environment Setup
+
+This project uses a conda environment named 'reco'. To set up and activate the environment:
+
+```bash
+# Create the conda environment (if not already created)
+conda create -n reco python=3.10
+
+# Activate the environment
+conda activate reco
+
+# Install required packages
+pip install pandas numpy scikit-learn lightgbm torch jupyter colorama alive-progress
+```
 
 ## Usage
 
@@ -61,12 +90,18 @@ cd ml-based
 python lr_gbdt.py
 ```
 
-#### Deep Learning Models
+#### Utility Modules
 
-Open and run the Jupyter notebooks in the `dl-based` directory:
+Run the demo utility to see the progress bar functionality:
+```bash
+# Activate the conda environment first
+conda activate reco
+
+# Run the demo utility
+python -m dl-based.demo_utils
 ```
-jupyter notebook dl-based/fm.ipynb
-```
+
+Deep learning model implementations are in progress. Stay tuned for upcoming implementations of FM, DeepFM, and other models.
 
 ## Requirements
 
@@ -77,10 +112,13 @@ jupyter notebook dl-based/fm.ipynb
 - LightGBM
 - PyTorch (for deep learning models)
 - Jupyter
+- colorama (for colored logging)
+- alive_progress (for progress bars)
 
 ## Future Work
 
 - Implement more deep learning models:
+  - FM (Factorization Machines)
   - DeepFM
   - Wide & Deep
   - DCN (Deep & Cross Network)
