@@ -1,5 +1,5 @@
 """
-Demo script to showcase the class-based progress bar utilities.
+Demo script to showcase the progress bar functionality.
 """
 
 import time
@@ -15,13 +15,13 @@ def slow_process(item: int) -> int:
     return item * 2
 
 
-def demo_class_based_progress():
-    """Demonstrate the class-based progress bar functionality."""
+def demo_progress():
+    """Demonstrate the progress bar functionality."""
     logger = ColorLogger(name="ProgressDemo")
-    logger.info("Starting class-based progress bar demo")
+    logger.info("Starting progress bar demo")
 
     print("\n" + "=" * 50)
-    print("CLASS-BASED PROGRESS BAR DEMO")
+    print("PROGRESS BAR DEMO")
     print("=" * 50)
 
     # Basic progress bar using context manager
@@ -100,4 +100,4 @@ def demo_class_based_progress():
 
 
 if __name__ == "__main__":
-    demo_class_based_progress()
+    demo_progress()

@@ -3,11 +3,19 @@ Enhanced progress bar utilities using alive_progress.
 """
 
 import time
-from typing import Any, Callable, Dict, Iterable, List, Optional, TypeVar
-
-from alive_progress import alive_bar, config_handler
-from alive_progress.styles import BARS, SPINNERS
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import TypeVar
 from colorama import Fore, Style
+from alive_progress import alive_bar
+from alive_progress import config_handler
+from alive_progress.styles import BARS
+from alive_progress.styles import SPINNERS
+
 
 # Configure default styles for alive_progress
 config_handler.set_global(
@@ -22,7 +30,7 @@ config_handler.set_global(
 T = TypeVar("T")
 
 
-class ProgressBar:
+class ProgressBar(object):
     """
     A class that provides enhanced progress bar functionality using alive_progress.
 

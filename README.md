@@ -13,11 +13,21 @@ This repository contains implementations of common ranking models for Click-Thro
 │   ├── config.py          # Configuration parameters
 │   └── lr_gbdt.py         # LR-GBDT model implementation
 └── dl-based/              # Deep learning based models
+    ├── config/            # Configuration classes
+    │   ├── base_config.py # Base configuration classes
+    │   └── FMConfig.py    # FM model configuration
+    ├── datasets/          # Dataset implementations
+    │   └── CriteoDataset.py # Criteo dataset implementation
+    ├── models/            # Model implementations
+    │   └── FMCTR.py       # FM model implementation
     ├── utils/             # Utility modules
     │   ├── logger.py      # Custom colored logging utility
-    │   └── progress.py    # Enhanced progress bar utilities
+    │   ├── progress.py    # Enhanced progress bar utilities
+    │   ├── register.py    # Registry mechanism for components
+    │   └── module_scanner.py # Module scanning and selection
     ├── __init__.py        # Package initialization
-    └── demo_utils.py      # Demo for progress bar utilities
+    ├── demo_utils.py      # Demo for progress bar utilities
+    └── test_register.py   # Test script for register mechanism
 ```
 
 ## Models Implemented
@@ -41,9 +51,25 @@ This repository contains implementations of common ranking models for Click-Thro
     - Supports processing items with progress tracking
     - Provides timed progress bars and multi-task progress tracking
     - Customizable spinner styles, bar styles, and colors
+  - **Register**: Registry mechanism for managing components
+    - Provides a way to register and retrieve models, datasets, configs, etc.
+    - Supports automatic component discovery and registration
+    - Enables building components from configuration
+  - **ModuleScanner**: Module scanning and interactive selection
+    - Automatically scans for available modules in different categories
+    - Provides interactive selection of components
+    - Supports custom module loading
 
 - **FM (Factorization Machines)**
-  - A model that can capture pairwise feature interactions (planned implementation)
+  - A model that can capture pairwise feature interactions
+  - Implemented with PyTorch and registered using the register mechanism
+  - Configurable through FMConfig class
+
+- **Datasets**
+  - **CriteoDataset**: PyTorch Dataset implementation for the Criteo dataset
+    - Supports different scaling methods (MinMaxScaler, StandardScaler)
+    - Handles preprocessing of dense and categorical features
+    - Registered using the register mechanism
 
 ## Dataset
 
@@ -90,6 +116,18 @@ cd ml-based
 python lr_gbdt.py
 ```
 
+#### Deep Learning Models
+
+The deep learning models use a register mechanism for component management. You can test the register mechanism with:
+
+```bash
+# Activate the conda environment first
+conda activate reco
+
+# Run the register test script with interactive component selection
+python -m dl-based.test_register
+```
+
 #### Utility Modules
 
 Run the demo utility to see the progress bar functionality:
@@ -101,7 +139,7 @@ conda activate reco
 python -m dl-based.demo_utils
 ```
 
-Deep learning model implementations are in progress. Stay tuned for upcoming implementations of FM, DeepFM, and other models.
+The FM model implementation is available and more deep learning models (DeepFM, Wide & Deep, etc.) will be added in the future.
 
 ## Requirements
 
@@ -114,11 +152,11 @@ Deep learning model implementations are in progress. Stay tuned for upcoming imp
 - Jupyter
 - colorama (for colored logging)
 - alive_progress (for progress bars)
+- importlib (for module scanning and importing)
 
 ## Future Work
 
 - Implement more deep learning models:
-  - FM (Factorization Machines)
   - DeepFM
   - Wide & Deep
   - DCN (Deep & Cross Network)

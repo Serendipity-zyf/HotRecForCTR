@@ -6,8 +6,8 @@ import sys
 import time
 from enum import Enum
 from typing import TextIO
-
-from colorama import Fore, Back, Style, init
+from colorama import Fore, Back
+from colorama import Style, init
 
 # Initialize colorama
 init(autoreset=True)
@@ -23,7 +23,7 @@ class LogLevel(Enum):
     CRITICAL = (Fore.WHITE + Back.RED, "CRITICAL")
 
 
-class ColorLogger:
+class ColorLogger(object):
     """
     A custom logger class that provides colored output for different log levels.
 

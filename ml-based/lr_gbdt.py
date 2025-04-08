@@ -16,14 +16,13 @@
 """
 
 import pickle
+from typing import Dict, Union
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Union
+from config import lgb_params_1, lgb_params_2, lr_params_1, lr_params_2, lr_params_3
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import OneHotEncoder
-from config import lgb_params_1, lgb_params_2
-from config import lr_params_1, lr_params_2, lr_params_3
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 
 # Load data
