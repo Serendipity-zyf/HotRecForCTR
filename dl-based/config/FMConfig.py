@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from base_config import BaseModelConfig, BaseTrainerConfig
+from utils.register import Registers
 
-from ..utils.register import Registers
+from .base_config import BaseModelConfig, BaseTrainerConfig
 
 
 @Registers.config_registry.register

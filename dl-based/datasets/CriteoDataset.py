@@ -1,13 +1,11 @@
-import pickle
 from typing import Any, List, Optional, Tuple
 
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
-
-from ..utils.logger import ColorLogger
-from ..utils.progress import ProgressBar
-from ..utils.register import Registers
+from utils.logger import ColorLogger
+from utils.progress import ProgressBar
+from utils.register import Registers
 
 logger = ColorLogger(name="Dataset")
 

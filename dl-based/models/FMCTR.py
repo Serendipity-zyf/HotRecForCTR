@@ -1,8 +1,7 @@
 import torch.nn as nn
-
-from ..config import FMConfig
-from ..utils.logger import ColorLogger
-from ..utils.register import Registers, build_from_config
+from config import FMConfig
+from utils.logger import ColorLogger
+from utils.register import Registers, build_from_config
 
 logger = ColorLogger(name="FMCTR")
 

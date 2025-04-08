@@ -95,12 +95,23 @@ def interactive_select(
 
 
 def _handle_errors(errors: List[Tuple[str, Exception]]) -> None:
-    """Handle import errors."""
+    """Handle import errors with detailed information."""
     if not errors:
         return
+
+    logger.error("Module import errors occurred:")
     for name, err in errors:
-        logger.warning(f"Module {name} import failed: {err}")
-    logger.error("Please check these modules.")
+        logger.warning(f"Failed to import module: {name}")
+        logger.warning(f"Error type: {type(err).__name__}")
+        logger.warning(f"Error message: {str(err)}")
+        if hasattr(err, "__traceback__"):
+            import traceback
+
+            tb_str = "".join(traceback.format_tb(err.__traceback__))
+            logger.warning(f"Traceback:\n{tb_str}")
+    logger.error(
+        "Please check these modules and ensure they exist and are properly implemented."
+    )
 
 
 def path_to_module_format(py_path: str) -> str:
@@ -126,7 +137,12 @@ def add_custom_modules(
 
 def import_modules(interactive: bool = False) -> Dict[str, str]:
     """Import all modules with optional interactive selection."""
-    scan_modules()
+    try:
+        scan_modules()
+    except Exception as e:
+        logger.error(f"Error during module scanning: {str(e)}")
+        return {}
+
     selected_components = {}
 
     if interactive:
@@ -135,10 +151,15 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
         )
 
         for category in MODULE_CATEGORIES:
-            if category.modules:
-                selected = interactive_select(category, category.modules)
-                if selected:
-                    selected_components[category.name] = selected
+            try:
+                if category.modules:
+                    selected = interactive_select(category, category.modules)
+                    if selected:
+                        selected_components[category.name] = selected
+            except Exception as e:
+                logger.error(
+                    f"Error during interactive selection for {category.name}: {str(e)}"
+                )
 
         print(f"\n{Fore.WHITE}{Style.BRIGHT}{'='*60}{Style.RESET_ALL}\n")
 
@@ -154,12 +175,16 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
             if name:
                 try:
                     full_name = f"{category.directory}.{name}"
+                    logger.debug(f"Attempting to import: {full_name}")
                     importlib.import_module(full_name)
                     logger.debug(
                         f"Module {category.color}{full_name}{Style.RESET_ALL} loaded."
                     )
                 except ImportError as error:
                     errors.append((name, error))
+                except Exception as e:
+                    logger.error(f"Unexpected error while importing {name}: {str(e)}")
+                    errors.append((name, e))
 
     _handle_errors(errors)
     return selected_components

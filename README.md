@@ -110,7 +110,7 @@ pip install pandas numpy scikit-learn lightgbm torch jupyter colorama alive-prog
 
 #### Machine Learning Models
 
-```python
+```bash
 # Run the LR-GBDT model
 cd ml-based
 python lr_gbdt.py
