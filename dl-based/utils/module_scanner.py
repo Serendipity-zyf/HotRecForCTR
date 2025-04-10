@@ -4,10 +4,13 @@ Module scanner and interactive selection functionality.
 
 import importlib
 import os
-import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
-from colorama import Fore, Style
+from colorama import Fore
+from colorama import Style
 from utils.logger import ColorLogger
 
 logger = ColorLogger(name="ModuleScanner")
@@ -28,13 +31,13 @@ class ModuleCategory:
 
 # Define module categories with different colors
 MODULE_CATEGORIES = [
-    ModuleCategory("MODELS", "models", Fore.CYAN),
-    ModuleCategory("LOSSES", "losses", Fore.GREEN),
-    ModuleCategory("METRICS", "metrics", Fore.YELLOW),
-    ModuleCategory("OPTIMIZERS", "optimizers", Fore.MAGENTA),
-    ModuleCategory("SCHEDULERS", "schedulers", Fore.BLUE),
-    ModuleCategory("CONFIGS", "configs", Fore.RED),
-    ModuleCategory("DATASETS", "datasets", Fore.LIGHTCYAN_EX),
+    ModuleCategory("model", "models", Fore.CYAN),
+    ModuleCategory("loss", "loss", Fore.GREEN),
+    ModuleCategory("metric", "metrics", Fore.YELLOW),
+    ModuleCategory("optimizer", "optimizer", Fore.MAGENTA),
+    ModuleCategory("scheduler", "scheduler", Fore.BLUE),
+    ModuleCategory("config", "config", Fore.RED),
+    ModuleCategory("dataset", "datasets", Fore.LIGHTCYAN_EX),
 ]
 
 
@@ -112,27 +115,6 @@ def _handle_errors(errors: List[Tuple[str, Exception]]) -> None:
     logger.error(
         "Please check these modules and ensure they exist and are properly implemented."
     )
-
-
-def path_to_module_format(py_path: str) -> str:
-    """Transform a python file path to module format."""
-    return py_path.replace("/", ".").rstrip(".py")
-
-
-def add_custom_modules(
-    all_modules: List[Tuple[str, List[str]]], config: Optional[Dict] = None
-) -> None:
-    """Add custom modules to all_modules."""
-    current_work_dir = os.getcwd()
-    if current_work_dir not in sys.path:
-        sys.path.append(current_work_dir)
-    if config is not None and "custom_modules" in config:
-        custom_modules = config["custom_modules"]
-        if not isinstance(custom_modules, list):
-            custom_modules = [custom_modules]
-        all_modules += [
-            ("", [path_to_module_format(module)]) for module in custom_modules
-        ]
 
 
 def import_modules(interactive: bool = False) -> Dict[str, str]:

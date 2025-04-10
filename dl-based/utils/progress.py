@@ -10,17 +10,18 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import TypeVar
-from colorama import Fore, Style
+
 from alive_progress import alive_bar
 from alive_progress import config_handler
 from alive_progress.styles import BARS
 from alive_progress.styles import SPINNERS
-
+from colorama import Fore
+from colorama import Style
 
 # Configure default styles for alive_progress
 config_handler.set_global(
     spinner="waves",  # A nice spinner
-    bar="classic",  # Smooth bar style
+    bar="classic",  # Classic bar style
     unknown="brackets",  # Style for unknown total
     theme="smooth",  # Smooth theme
     stats_end=True,  # Show stats at the end

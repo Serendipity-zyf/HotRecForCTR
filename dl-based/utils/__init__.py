@@ -3,9 +3,13 @@ Utility modules for the deep learning-based recommendation system.
 """
 
 from .logger import ColorLogger
+from .module_scanner import MODULE_CATEGORIES
 from .module_scanner import import_modules
-from .progress import ProgressBar, create_progress_bar
-from .register import Register, Registers, build_from_config
+from .progress import ProgressBar
+from .progress import create_progress_bar
+from .register import Register
+from .register import Registers
+from .register import build_from_config
 
 __all__ = [
     "ColorLogger",
@@ -15,4 +19,5 @@ __all__ = [
     "Registers",
     "build_from_config",
     "import_modules",
+    "MODULE_CATEGORIES",
 ]

@@ -1,8 +1,12 @@
-from typing import Any, List, Optional, Tuple
-
 import pandas as pd
 import torch
+from typing import Any
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 from torch.utils.data import Dataset
+from torch.utils.data import random_split
 from utils.logger import ColorLogger
 from utils.progress import ProgressBar
 from utils.register import Registers
@@ -18,12 +22,18 @@ class CriteoDataset(Dataset):
     Args:
         data_path (str): Path to the dataset file.
         scaled (str): Scaling method to use. Options: "MinMaxScaler", "StandardScaler", "None".
+        split (bool): Whether to split dataset into train and validation.
+        val_ratio (float): Validation set ratio, default is 0.2.
+        seed (int): Random seed for splitting, default is 42.
     """
 
     def __init__(
         self,
         data_path: str = "../data/criteo_data.parquet",
         scaled: str = "MinMaxScaler",
+        split: bool = True,
+        val_ratio: float = 0.2,
+        seed: int = 42,
     ):
         self.X: Optional[List[Tuple]] = []
         self.y: Optional[torch.Tensor] = None
@@ -33,6 +43,12 @@ class CriteoDataset(Dataset):
 
         self.pd_data: pd.DataFrame = self._load_df_parquet()
         self._preprocess()
+
+        if split:
+            self.train_dataset, self.val_dataset = self.train_val_split(val_ratio, seed)
+        else:
+            self.train_dataset = self
+            self.val_dataset = None
 
     def _load_df_parquet(self) -> pd.DataFrame:
         logger.info(f"Loading criteo data from {self.data_path}")
@@ -62,8 +78,8 @@ class CriteoDataset(Dataset):
             logger.info(f"Using no scaler.")
 
         dense_x = torch.from_numpy(dense_x)
-        discrete_x = torch.from_numpy(discrete_x, dtype=torch.long)
-        self.y = torch.from_numpy(y, dtype=torch.long)
+        discrete_x = torch.from_numpy(discrete_x).long()
+        self.y = torch.from_numpy(y).long()
         with ProgressBar(total=len(dense_x), title="Processing X") as bar:
             for i in range(len(dense_x)):
                 self.X.append((dense_x[i], discrete_x[i]))
@@ -76,3 +92,54 @@ class CriteoDataset(Dataset):
 
     def __getitem__(self, idx) -> Tuple[Tuple, torch.Tensor]:
         return self.X[idx], self.y[idx]
+
+    def train_val_split(
+        self, val_ratio: float = 0.2, seed: int = 42
+    ) -> Tuple[Dataset, Dataset]:
+        """Split dataset into training and validation sets.
+
+        Args:
+            val_ratio: Ratio of validation set size to total dataset size.
+            seed: Random seed for reproducibility.
+
+        Returns:
+            Tuple of (training dataset, validation dataset)
+        """
+        total_size = len(self)
+        val_size = int(total_size * val_ratio)
+        train_size = total_size - val_size
+
+        train_dataset, val_dataset = random_split(
+            self, [train_size, val_size], generator=torch.Generator().manual_seed(seed)
+        )
+
+        logger.info(
+            f"Dataset split: {train_size} training samples, {val_size} validation samples"
+        )
+        return train_dataset, val_dataset
+
+    @staticmethod
+    def get_dataloader(
+        dataset: Dataset,
+        batch_size: int,
+        shuffle: bool = True,
+        num_workers: int = 4,
+    ) -> torch.utils.data.DataLoader:
+        """Create a DataLoader for the dataset.
+
+        Args:
+            dataset: Dataset to create DataLoader for
+            batch_size: Batch size
+            shuffle: Whether to shuffle the data
+            num_workers: Number of worker processes
+
+        Returns:
+            DataLoader instance
+        """
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            num_workers=num_workers,
+            pin_memory=True,
+        )
