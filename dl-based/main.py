@@ -19,7 +19,9 @@ def main():
         print(f"{category}: {component}")
 
     # Create a dataset
-    dataset = Registers.dataset_registry[selected["dataset"]]()
+    dataset = Registers.dataset_registry[selected["dataset"]](
+        data_path="../data/criteo_data.parquet"
+    )
 
     # Obtain training and validation dataloaders
     train_loader = dataset.get_dataloader(
@@ -35,6 +37,7 @@ def main():
     # Log dataset information
     logger.info(f"Training samples: {len(dataset.train_dataset)}")
     logger.info(f"Validation samples: {len(dataset.val_dataset)}")
+    logger.info(f"Train data sample shape's: {next(iter(train_loader))[0].shape}")
 
 
 if __name__ == "__main__":

@@ -1,18 +1,25 @@
+import torch
 import torch.nn as nn
+import numpy as np
+
+
+from typing import List
+
 from config import FMConfig
 from utils.logger import ColorLogger
-from utils.register import Registers, build_from_config
+from utils.register import Registers
+from utils.register import build_from_config
 
 logger = ColorLogger(name="FMCTR")
 
 
 @Registers.model_registry.register
 class FMCTR(nn.Module):
-    def __init__(self):
+    def __init__(self, feature_dims: List[int]):
         super(FMCTR, self).__init__()
         pass
 
-    def forward(self, x):
+    def forward(self, dense_x: torch.Tensor, discrete_x: torch.Tensor) -> torch.Tensor:
         pass
 
     @classmethod

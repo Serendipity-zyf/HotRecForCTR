@@ -5,11 +5,11 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from torch.utils.data import Dataset
-from torch.utils.data import random_split
 from utils.logger import ColorLogger
 from utils.progress import ProgressBar
 from utils.register import Registers
+from torch.utils.data import Dataset
+from torch.utils.data import random_split
 
 logger = ColorLogger(name="Dataset")
 
@@ -29,7 +29,7 @@ class CriteoDataset(Dataset):
 
     def __init__(
         self,
-        data_path: str = "../data/criteo_data.parquet",
+        data_path: str,
         scaled: str = "MinMaxScaler",
         split: bool = True,
         val_ratio: float = 0.2,
@@ -40,6 +40,7 @@ class CriteoDataset(Dataset):
         self.scaler: Optional[Any] = None
         self.scaled: str = scaled
         self.data_path: str = data_path
+        self.feature_dims: Optional[List[int]] = None
 
         self.pd_data: pd.DataFrame = self._load_df_parquet()
         self._preprocess()
@@ -58,10 +59,14 @@ class CriteoDataset(Dataset):
 
     def _preprocess(self) -> None:
         logger.info("Preprocessing data...")
+        # Get feature dimensions
+        self.feature_dims = self.pd_data.iloc[:, 13:].nunique().tolist()
+        # Extract features and labels
         X = self.pd_data.iloc[:, 1:].values  # Features (columns 1-39)
         y = self.pd_data.iloc[:, 0].values  # Labels (column 0)
         dense_x = X[:, :13]
         discrete_x = X[:, 13:]
+        # Scaling
         if self.scaled == "MinMaxScaler":
             from sklearn.preprocessing import MinMaxScaler
 
@@ -86,12 +91,16 @@ class CriteoDataset(Dataset):
                 bar()
 
         logger.info("Data preprocessing completed.")
+        # show describe
+        logger.info(f"Data description: \n{self.pd_data.describe()}")
+        logger.info(f"Data sample: \n{self.pd_data.head()}")
+        logger.info(f"Data feature dimension list: \n{self.feature_dims}")
 
     def __len__(self) -> int:
         return len(self.pd_data)
 
-    def __getitem__(self, idx) -> Tuple[Tuple, torch.Tensor]:
-        return self.X[idx], self.y[idx]
+    def __getitem__(self, idx) -> Tuple[torch.Tensor]:
+        return self.X[idx][0], self.X[idx][1], self.y[idx]
 
     def train_val_split(
         self, val_ratio: float = 0.2, seed: int = 42

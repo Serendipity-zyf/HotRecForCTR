@@ -2,9 +2,15 @@
 Registry mechanism for managing models, losses, metrics, and other components.
 """
 
-from dataclasses import is_dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
+from dataclasses import is_dataclass
 from utils.logger import ColorLogger
 
 logger = ColorLogger(name="Register")
