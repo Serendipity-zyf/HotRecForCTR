@@ -36,7 +36,8 @@ MODULE_CATEGORIES = [
     ModuleCategory("metric", "metrics", Fore.YELLOW),
     ModuleCategory("optimizer", "optimizer", Fore.MAGENTA),
     ModuleCategory("scheduler", "scheduler", Fore.BLUE),
-    ModuleCategory("config", "config", Fore.RED),
+    ModuleCategory("model_config", "config", Fore.RED),
+    ModuleCategory("trainer_config", "config", Fore.LIGHTBLUE_EX),
     ModuleCategory("dataset", "datasets", Fore.LIGHTCYAN_EX),
 ]
 
@@ -117,6 +118,29 @@ def _handle_errors(errors: List[Tuple[str, Exception]]) -> None:
     )
 
 
+def _get_registered_components(category_name: str) -> List[str]:
+    """Get the registered components for a specific category."""
+    from utils.register import Registers
+
+    if category_name == "model_config":
+        return list(Registers.model_config_registry.keys())
+    elif category_name == "trainer_config":
+        return list(Registers.trainer_config_registry.keys())
+    elif category_name == "model":
+        return list(Registers.model_registry.keys())
+    elif category_name == "dataset":
+        return list(Registers.dataset_registry.keys())
+    elif category_name == "loss":
+        return list(Registers.loss_registry.keys())
+    elif category_name == "metric":
+        return list(Registers.metric_registry.keys())
+    elif category_name == "optimizer":
+        return list(Registers.optimizer_registry.keys())
+    elif category_name == "scheduler":
+        return list(Registers.scheduler_registry.keys())
+    return []
+
+
 def import_modules(interactive: bool = False) -> Dict[str, str]:
     """Import all modules with optional interactive selection."""
     try:
@@ -127,33 +151,10 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
 
     selected_components = {}
 
-    if interactive:
-        print(
-            f"\n{Fore.WHITE}{Style.BRIGHT}{'='*20} Component Selection {'='*20}{Style.RESET_ALL}"
-        )
-
-        for category in MODULE_CATEGORIES:
-            try:
-                if category.modules:
-                    selected = interactive_select(category, category.modules)
-                    if selected:
-                        selected_components[category.name] = selected
-            except Exception as e:
-                logger.error(
-                    f"Error during interactive selection for {category.name}: {str(e)}"
-                )
-
-        print(f"\n{Fore.WHITE}{Style.BRIGHT}{'='*60}{Style.RESET_ALL}\n")
-
+    # First, import all modules to register components
     errors = []
     for category in MODULE_CATEGORIES:
-        modules_to_import = (
-            [selected_components.get(category.name)]
-            if interactive and category.name in selected_components
-            else category.modules
-        )
-
-        for name in modules_to_import:
+        for name in category.modules:
             if name:
                 try:
                     full_name = f"{category.directory}.{name}"
@@ -167,6 +168,32 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
                 except Exception as e:
                     logger.error(f"Unexpected error while importing {name}: {str(e)}")
                     errors.append((name, e))
+
+    # Now handle interactive selection with registered components
+    if interactive:
+        print(
+            f"\n{Fore.WHITE}{Style.BRIGHT}{'='*20} Component Selection {'='*20}{Style.RESET_ALL}"
+        )
+
+        for category in MODULE_CATEGORIES:
+            try:
+                # For config categories, use registered components instead of file names
+                if category.name in ["model_config", "trainer_config"]:
+                    registered_components = _get_registered_components(category.name)
+                    if registered_components:
+                        selected = interactive_select(category, registered_components)
+                        if selected:
+                            selected_components[category.name] = selected
+                elif category.modules:
+                    selected = interactive_select(category, category.modules)
+                    if selected:
+                        selected_components[category.name] = selected
+            except Exception as e:
+                logger.error(
+                    f"Error during interactive selection for {category.name}: {str(e)}"
+                )
+
+        print(f"\n{Fore.WHITE}{Style.BRIGHT}{'='*60}{Style.RESET_ALL}\n")
 
     _handle_errors(errors)
     return selected_components

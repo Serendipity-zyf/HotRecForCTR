@@ -41,6 +41,7 @@ class CriteoDataset(Dataset):
         self.scaled: str = scaled
         self.data_path: str = data_path
         self.feature_dims: Optional[List[int]] = None
+        self.dense_feature_dim: int = 13
 
         self.pd_data: pd.DataFrame = self._load_df_parquet()
         self._preprocess()

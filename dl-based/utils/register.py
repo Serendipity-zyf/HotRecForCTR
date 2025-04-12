@@ -65,7 +65,8 @@ class Registers:
     metric_registry = Register("metric")
     scheduler_registry = Register("scheduler")
     optimizer_registry = Register("optimizer")
-    config_registry = Register("config")
+    model_config_registry = Register("model_config")
+    trainer_config_registry = Register("trainer_config")
     dataset_registry = Register("dataset")
 
 

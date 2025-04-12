@@ -23,21 +23,32 @@ def main():
         data_path="../data/criteo_data.parquet"
     )
 
+    # Load configurations
+    model_cfg = Registers.model_config_registry[selected["model_config"]](
+        dataset.feature_dims, dataset.dense_feature_dim
+    )
+    trainer_cfg = Registers.trainer_config_registry[selected["trainer_config"]]()
+    train_batch_size = trainer_cfg.train_batch_size
+    test_batch_size = trainer_cfg.test_batch_size
+
     # Obtain training and validation dataloaders
     train_loader = dataset.get_dataloader(
-        dataset.train_dataset, batch_size=128, shuffle=True
+        dataset.train_dataset, batch_size=train_batch_size, shuffle=True
     )
 
     val_loader = dataset.get_dataloader(
         dataset.val_dataset,
-        batch_size=256,
+        batch_size=test_batch_size,
         shuffle=False,
     )
 
     # Log dataset information
     logger.info(f"Training samples: {len(dataset.train_dataset)}")
     logger.info(f"Validation samples: {len(dataset.val_dataset)}")
-    logger.info(f"Train data sample shape's: {next(iter(train_loader))[0].shape}")
+
+    # model load
+    model = Registers.model_registry[selected["model"]].from_config(model_cfg)
+    logger.info(f"Model: {model}")
 
 
 if __name__ == "__main__":

@@ -1,29 +1,35 @@
+from typing import List
+from typing import Optional
+from dataclasses import field
 from dataclasses import dataclass
 
 from utils.register import Registers
+from .base_config import BaseModelConfig
+from .base_config import BaseTrainerConfig
 
-from .base_config import BaseModelConfig, BaseTrainerConfig
 
-
-@Registers.config_registry.register
 @dataclass
+@Registers.model_config_registry.register
 class FMConfig(BaseModelConfig):
     """Configuration for FM model."""
 
-    type: str = "FMCTR"
-    embed_dim: int = 10
-    dropout_rate: float = 0.1
-    hidden_size: int = 128
+    type: str = "FMConfig"
+    feature_dims: List[int] = field(default_factory=list)
+    dense_feature_dim: Optional[int] = None
+    embed_dim: int = 8
 
 
-@Registers.config_registry.register
 @dataclass
+@Registers.trainer_config_registry.register
 class FMTrainerConfig(BaseTrainerConfig):
     """Configuration for FM trainer."""
 
-    type: str = "FMCTR"
-    epochs: int = 100
-    batch_size: int = 256
+    type: str = "FMTrainerConfig"
+    epochs: int = 10
+    train_batch_size: int = 64
+    test_batch_size: int = 128
     learning_rate: float = 1e-3
     weight_decay: float = 1e-5
-    scheduler_step: int = 10
+    scheduler_step: Optional[int] = 10
+    scheduler_gamma: Optional[float] = 0.5
+    device: str = "cpu"
