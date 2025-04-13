@@ -210,6 +210,10 @@ class SingleGPUTrainScript(object):
 
         return avg_loss, metric
 
+    def save(self, model: nn.Module, path: str) -> None:
+        """Save the model."""
+        torch.save(model.state_dict(), path)
+
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "SingleGPUTrainScript":
         """Create model from config."""
