@@ -9,6 +9,8 @@ from pydantic.types import PositiveFloat
 from utils.register import Registers
 from .base_config import BaseModelConfig
 from .base_config import BaseTrainerConfig
+from .base_config import OptimizerConfig
+from .base_config import SchedulerConfig
 
 
 @Registers.model_config_registry.register
@@ -31,8 +33,10 @@ class FMTrainerConfig(BaseTrainerConfig):
     test_batch_size: PositiveInt = 128
     grad_clip: PositiveFloat = 1.0
     device: Union[Literal["cpu", "cuda", "auto"], str, List[str]] = "cuda:0"
-    learning_rate: PositiveFloat = 1e-3
-    weight_decay: float = Field(default=2e-5, ge=0)
     is_scheduler: bool = True
-    scheduler_step: Optional[PositiveInt] = 10
-    scheduler_gamma: Optional[float] = Field(default=0.5, gt=0)
+
+    optimizer: OptimizerConfig = Field(default_factory=OptimizerConfig)
+    scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig)
+
+    class Config:
+        validate_assignment = True

@@ -27,6 +27,56 @@ class BaseModelConfig(BaseModel):
         validate_assignment = True
 
 
+class OptimizerConfig(BaseModel):
+    """Base configuration class for optimizer."""
+
+    learning_rate: PositiveFloat = 1e-3
+    weight_decay: float = Field(default=2e-5, ge=0)
+    betas: tuple[float, float] = (0.9, 0.999)
+    eps: float = 1e-8
+
+    class Config:
+        validate_assignment = True
+
+
+class SchedulerConfig(BaseModel):
+    """Base configuration class for scheduler."""
+
+    type: Literal[
+        "StepLR", "ExponentialLR", "CosineAnnealingLR", "ReduceLROnPlateau"
+    ] = "StepLR"
+
+    # StepLR parameters
+    step_size: PositiveInt = 10
+    gamma: float = Field(default=0.8, gt=0)
+
+    # CosineAnnealingLR parameters
+    T_max: Optional[PositiveInt] = None
+    eta_min: Optional[float] = Field(default=None, ge=0)
+
+    # ReduceLROnPlateau parameters
+    mode: Optional[Literal["min", "max"]] = None
+    factor: Optional[float] = Field(default=None, gt=0)
+    patience: Optional[PositiveInt] = None
+
+    @field_validator("*")
+    @classmethod
+    def validate_params(cls, v, info):
+        field = info.field_name
+        if field != "type" and v is not None:
+            # Ensure that the necessary parameters are set
+            required_params = {
+                "StepLR": ["step_size", "gamma"],
+                "ExponentialLR": ["gamma"],
+                "CosineAnnealingLR": ["T_max"],
+                "ReduceLROnPlateau": ["mode", "factor", "patience"],
+            }
+        return v
+
+    class Config:
+        validate_assignment = True
+
+
 class BaseTrainerConfig(BaseModel):
     """Base configuration class for trainer."""
 
@@ -34,13 +84,11 @@ class BaseTrainerConfig(BaseModel):
     train_batch_size: PositiveInt
     test_batch_size: PositiveInt
     grad_clip: PositiveFloat
+    device: Union[Literal["cpu", "cuda", "auto"], str, List[str]]
     is_scheduler: bool
-    device: Union[Literal["cpu", "cuda", "auto"], str, List[str]] = "cpu"
 
-    learning_rate: PositiveFloat
-    weight_decay: float = Field(ge=0)
-    scheduler_step: Optional[PositiveInt]
-    scheduler_gamma: Optional[float] = Field(default=None, gt=0)
+    optimizer: OptimizerConfig
+    scheduler: SchedulerConfig
 
     @field_validator("device")
     @classmethod
