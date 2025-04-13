@@ -9,8 +9,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
+from pydantic import BaseModel
 
-from dataclasses import is_dataclass
 from utils.logger import ColorLogger
 
 logger = ColorLogger(name="Register")
@@ -82,15 +82,14 @@ def build_from_config(config: Union[Dict, Any], registry: Register) -> Any:
         The constructed object
     """
     # If it is a configuration class instance, convert it to a dictionary.
-    if is_dataclass(config):
-        config_dict = config.to_dict()
+    if isinstance(config, BaseModel):
+        config_dict = config.model_dump()
     elif isinstance(config, dict):
         config_dict = config.copy()
     else:
         raise TypeError(
             f"Config must be either a dictionary or a dataclass instance, got {type(config)}"
         )
-    print(config_dict)
     # Get type and remove from configuration
     obj_type = config_dict.pop("Type", None)
     if obj_type is None:

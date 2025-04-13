@@ -123,25 +123,19 @@ def _get_registered_components(category_name: str) -> List[str]:
     """Get the registered components for a specific category."""
     from utils.register import Registers
 
-    if category_name == "model_config":
-        return list(Registers.model_config_registry.keys())
-    elif category_name == "trainer_config":
-        return list(Registers.trainer_config_registry.keys())
-    elif category_name == "model":
-        return list(Registers.model_registry.keys())
-    elif category_name == "dataset":
-        return list(Registers.dataset_registry.keys())
-    elif category_name == "loss":
-        return list(Registers.loss_registry.keys())
-    elif category_name == "metric":
-        return list(Registers.metric_registry.keys())
-    elif category_name == "optimizer":
-        return list(Registers.optimizer_registry.keys())
-    elif category_name == "scheduler":
-        return list(Registers.scheduler_registry.keys())
-    elif category_name == "train_script":
-        return list(Registers.train_script_registry.keys())
-    return []
+    registry_map = {
+        "model_config": Registers.model_config_registry,
+        "trainer_config": Registers.trainer_config_registry,
+        "model": Registers.model_registry,
+        "dataset": Registers.dataset_registry,
+        "loss": Registers.loss_registry,
+        "metric": Registers.metric_registry,
+        "optimizer": Registers.optimizer_registry,
+        "scheduler": Registers.scheduler_registry,
+        "train_script": Registers.train_script_registry,
+    }
+
+    return list(registry_map.get(category_name, {}).keys())
 
 
 def import_modules(interactive: bool = False) -> Dict[str, str]:

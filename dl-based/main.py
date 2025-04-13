@@ -25,7 +25,7 @@ def main():
 
     # Load configurations
     model_cfg = Registers.model_config_registry[selected["model_config"]](
-        dataset.feature_dims, dataset.dense_feature_dim
+        feature_dims=dataset.feature_dims, dense_feature_dim=dataset.dense_feature_dim
     )
     trainer_cfg = Registers.trainer_config_registry[selected["trainer_config"]]()
     train_batch_size = trainer_cfg.train_batch_size
@@ -42,7 +42,7 @@ def main():
 
     # model load
     model = Registers.model_registry[selected["model"]].from_config(model_cfg)
-    logger.info(f"Model: {model}")
+    logger.info(f"Model Structure:\n {model}")
 
 
 if __name__ == "__main__":
