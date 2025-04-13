@@ -68,6 +68,7 @@ class Registers:
     model_config_registry = Register("model_config")
     trainer_config_registry = Register("trainer_config")
     dataset_registry = Register("dataset")
+    train_script_registry = Register("train_script")
 
 
 def build_from_config(config: Union[Dict, Any], registry: Register) -> Any:
@@ -89,11 +90,11 @@ def build_from_config(config: Union[Dict, Any], registry: Register) -> Any:
         raise TypeError(
             f"Config must be either a dictionary or a dataclass instance, got {type(config)}"
         )
-
+    print(config_dict)
     # Get type and remove from configuration
-    obj_type = config_dict.pop("type", None)
+    obj_type = config_dict.pop("Type", None)
     if obj_type is None:
-        raise ValueError("Config must contain a 'type' field")
+        raise ValueError("Config must contain a 'Type' field")
 
     if obj_type not in registry:
         raise KeyError(f"Type {obj_type} not found in registry {registry._name}")

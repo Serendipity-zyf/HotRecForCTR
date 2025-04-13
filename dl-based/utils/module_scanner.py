@@ -39,6 +39,7 @@ MODULE_CATEGORIES = [
     ModuleCategory("model_config", "config", Fore.RED),
     ModuleCategory("trainer_config", "config", Fore.LIGHTBLUE_EX),
     ModuleCategory("dataset", "datasets", Fore.LIGHTCYAN_EX),
+    ModuleCategory("train_script", "train_scripts", Fore.LIGHTGREEN_EX),
 ]
 
 
@@ -138,6 +139,8 @@ def _get_registered_components(category_name: str) -> List[str]:
         return list(Registers.optimizer_registry.keys())
     elif category_name == "scheduler":
         return list(Registers.scheduler_registry.keys())
+    elif category_name == "train_script":
+        return list(Registers.train_script_registry.keys())
     return []
 
 

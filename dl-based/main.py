@@ -37,14 +37,8 @@ def main():
     )
 
     val_loader = dataset.get_dataloader(
-        dataset.val_dataset,
-        batch_size=test_batch_size,
-        shuffle=False,
+        dataset.val_dataset, batch_size=test_batch_size, shuffle=False
     )
-
-    # Log dataset information
-    logger.info(f"Training samples: {len(dataset.train_dataset)}")
-    logger.info(f"Validation samples: {len(dataset.val_dataset)}")
 
     # model load
     model = Registers.model_registry[selected["model"]].from_config(model_cfg)
