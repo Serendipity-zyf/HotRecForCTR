@@ -81,3 +81,6 @@ checkpoints/
 *.flv
 *.mov
 *.wmv
+
+# special .sh
+git-sync.sh
