@@ -1,17 +1,15 @@
-"""Adam optimizer implementation."""
+"""AdamW optimizer implementation."""
 
 import torch
 import torch.optim as optim
-from typing import Any
-from typing import Dict
-from typing import Iterator
+from typing import Any, Dict, Iterator
 
 from utils.register import Registers
 
 
 @Registers.optimizer_registry.register
-class Adam(optim.Adam):
-    """Adam optimizer implementation."""
+class AdamW(optim.AdamW):
+    """AdamW optimizer implementation."""
 
     def __init__(
         self,
@@ -19,7 +17,7 @@ class Adam(optim.Adam):
         lr: float = 1e-3,
         betas: tuple[float, float] = (0.9, 0.999),
         eps: float = 1e-8,
-        weight_decay: float = 0,
+        weight_decay: float = 0.01,
     ):
         super().__init__(
             params,
@@ -30,13 +28,12 @@ class Adam(optim.Adam):
         )
 
     @classmethod
-    def from_config(cls, params, config: Dict[str, Any]) -> "Adam":
+    def from_config(cls, params, config: Dict[str, Any]) -> "AdamW":
         """Create optimizer from config."""
-        # Only select the parameters required by the Adam optimizer.
-        adam_params = {
+        adamw_params = {
             "lr": config["learning_rate"],
             "betas": config["betas"],
             "eps": config["eps"],
             "weight_decay": config["weight_decay"],
         }
-        return cls(params, **adam_params)
+        return cls(params, **adamw_params)

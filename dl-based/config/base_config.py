@@ -9,6 +9,7 @@ from pydantic import Field
 from pydantic import field_validator
 from pydantic.types import PositiveInt
 from pydantic.types import PositiveFloat
+from pydantic import ValidationInfo
 
 
 class BaseModelConfig(BaseModel):
@@ -16,7 +17,7 @@ class BaseModelConfig(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
-        return {k: v for k, v in self.items() if v is not None}
+        return {k: v for k, v in self.model_dump().items() if v is not None}
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "BaseModelConfig":
@@ -30,10 +31,44 @@ class BaseModelConfig(BaseModel):
 class OptimizerConfig(BaseModel):
     """Base configuration class for optimizer."""
 
+    type: Literal["SGD", "Adam", "AdamW", "RMSprop"] = "Adam"
     learning_rate: PositiveFloat = 1e-3
     weight_decay: float = Field(default=2e-5, ge=0)
-    betas: tuple[float, float] = (0.9, 0.999)
-    eps: float = 1e-8
+
+    # Adam/AdamW parameters
+    betas: Optional[tuple[float, float]] = (0.9, 0.999)
+    eps: Optional[float] = 1e-8
+
+    # SGD parameters
+    momentum: Optional[float] = Field(default=None, ge=0, le=1)
+    dampening: Optional[float] = Field(default=None, ge=0)
+    nesterov: Optional[bool] = None
+
+    # RMSprop parameters
+    alpha: Optional[float] = Field(default=None, ge=0)
+    centered: Optional[bool] = None
+
+    @field_validator("*")
+    @classmethod
+    def validate_params(cls, v: Any, info: ValidationInfo) -> Any:
+        field = info.field_name
+        values = info.data
+
+        if field != "type" and v is not None:
+            required_params = {
+                "SGD": ["learning_rate", "weight_decay"],
+                "Adam": ["learning_rate", "weight_decay", "betas", "eps"],
+                "AdamW": ["learning_rate", "weight_decay", "betas", "eps"],
+                "RMSprop": ["learning_rate", "weight_decay", "alpha", "eps"],
+            }
+
+            if values.get("type") in required_params:
+                required = required_params[values["type"]]
+                if field in required and v is None:
+                    raise ValueError(
+                        f"Parameter '{field}' is required for optimizer type '{values['type']}'"
+                    )
+        return v
 
     class Config:
         validate_assignment = True
@@ -61,16 +96,24 @@ class SchedulerConfig(BaseModel):
 
     @field_validator("*")
     @classmethod
-    def validate_params(cls, v, info):
+    def validate_params(cls, v: Any, info: ValidationInfo) -> Any:
         field = info.field_name
+        values = info.data
+
         if field != "type" and v is not None:
-            # Ensure that the necessary parameters are set
             required_params = {
                 "StepLR": ["step_size", "gamma"],
                 "ExponentialLR": ["gamma"],
                 "CosineAnnealingLR": ["T_max"],
                 "ReduceLROnPlateau": ["mode", "factor", "patience"],
             }
+
+            if values.get("type") in required_params:
+                required = required_params[values["type"]]
+                if field in required and v is None:
+                    raise ValueError(
+                        f"Parameter '{field}' is required for scheduler type '{values['type']}'"
+                    )
         return v
 
     class Config:
@@ -110,7 +153,7 @@ class BaseTrainerConfig(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary."""
-        return {k: v for k, v in self.items() if v is not None}
+        return {k: v for k, v in self.model_dump().items() if v is not None}
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "BaseTrainerConfig":

@@ -28,7 +28,6 @@ class FMCTR(nn.Module):
             [nn.Embedding(dim, embed_dim) for dim in feature_dims]
         )
         self.dense_layer = nn.Linear(dense_feature_dim, embed_dim)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, dense_x: torch.Tensor, discrete_x: torch.Tensor) -> torch.Tensor:
         # discrete_embeds shape's [batch_size, num_discrete_features, embed_dim]
@@ -48,7 +47,7 @@ class FMCTR(nn.Module):
         sum_of_square = torch.sum(torch.square(embeds), dim=1)
         # fm_output shape's [batch_size]
         fm_output = torch.sum(0.5 * (square_of_sum - sum_of_square), dim=1)
-        return self.sigmoid(fm_output)
+        return fm_output
 
     @classmethod
     def from_config(cls, config: FMConfig) -> "FMCTR":

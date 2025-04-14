@@ -26,20 +26,35 @@ class Register:
     def __setitem__(self, key: str, value: Callable) -> None:
         if not callable(value):
             raise Exception(f"Value of a Registry must be a callable!\nValue: {value}")
-        if key is None:
+        # Always use the class/function name if key is None or empty
+        if not key:
             key = value.__name__
         if key in self._dict:
             logger.warning(f"Key {key} already in registry {self._name}.")
         self._dict[key] = value
 
     def register(self, target: Union[str, Callable]) -> Callable:
-        def decorator(key: Optional[str], value: Callable) -> Callable:
+        """
+        Register a callable (class or function).
+
+        Args:
+            target: Either a callable to register, or a string key to register the callable under.
+                   If None or empty string is provided, the callable's name will be used.
+        """
+
+        def add_to_registry(key: Optional[str], value: Callable) -> Callable:
+            # Always use the class name if key is None or empty
+            if not key:
+                key = value.__name__
             self[key] = value
             return value
 
         if callable(target):
-            return decorator(None, target)
-        return lambda x: decorator(target, x)
+            # If target is a callable, use its name as the key
+            return add_to_registry(None, target)
+
+        # If target is a string, use it as the key
+        return lambda x: add_to_registry(target, x)
 
     def __getitem__(self, key: str) -> Any:
         return self._dict[key]

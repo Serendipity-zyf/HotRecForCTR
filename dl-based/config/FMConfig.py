@@ -23,6 +23,21 @@ class FMConfig(BaseModelConfig):
     embed_dim: PositiveInt = 8
 
 
+FMOptimizerConfig = OptimizerConfig(
+    type="Adam",
+    learning_rate=1e-3,
+    weight_decay=2e-5,
+    betas=(0.9, 0.999),
+    eps=1e-8,
+)
+
+FMSchedulerConfig = SchedulerConfig(
+    type="StepLR",
+    step_size=5,
+    gamma=0.8,
+)
+
+
 @Registers.trainer_config_registry.register
 class FMTrainerConfig(BaseTrainerConfig):
     """Configuration for FM trainer."""
@@ -35,8 +50,8 @@ class FMTrainerConfig(BaseTrainerConfig):
     device: Union[Literal["cpu", "cuda", "auto"], str, List[str]] = "cuda:0"
     is_scheduler: bool = True
 
-    optimizer: OptimizerConfig = Field(default_factory=OptimizerConfig)
-    scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig)
+    optimizer: OptimizerConfig = FMOptimizerConfig
+    scheduler: SchedulerConfig = FMSchedulerConfig
 
     class Config:
         validate_assignment = True

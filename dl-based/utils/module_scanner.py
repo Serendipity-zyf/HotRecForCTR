@@ -1,32 +1,17 @@
 """
-Module scanner and interactive selection functionality.
+Module scanner functionality.
 """
 
 import importlib
 import os
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Dict, List, Tuple, Optional
 
-from colorama import Fore
-from colorama import Style
-from utils.logger import ColorLogger
+from colorama import Fore, Style
+from .logger import ColorLogger
+from .interactive_selector import interactive_select
+from .types import ModuleCategory
 
 logger = ColorLogger(name="ModuleScanner")
-
-
-class ModuleCategory:
-    """Module category configuration"""
-
-    def __init__(self, name: str, directory: str, color: str = Fore.CYAN):
-        self.name = name
-        self.directory = directory
-        self.modules = []
-        self.color = color
-
-    def __str__(self):
-        return f"{self.color}{self.name}{Style.RESET_ALL} ({len(self.modules)} modules)"
 
 
 # Define module categories with different colors
@@ -43,6 +28,15 @@ MODULE_CATEGORIES = [
 ]
 
 
+def is_valid_module(filename: str) -> bool:
+    """Check if the file is a valid module to import."""
+    return (
+        filename.endswith(".py")
+        and not filename.startswith("__")
+        and "base" not in filename.lower()
+    )
+
+
 def scan_modules() -> None:
     """Automatically scan for available modules in each category."""
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,51 +46,18 @@ def scan_modules() -> None:
         if not os.path.exists(category_path):
             continue
 
-        for file in os.listdir(category_path):
-            if file.endswith(".py") and not file.startswith("__"):
-                module_name = file[:-3]  # Remove .py extension
-                category.modules.append(module_name)
+        category.modules.extend(
+            [file[:-3] for file in os.listdir(category_path) if is_valid_module(file)]
+        )
 
 
 def get_available_components() -> Dict[str, List[str]]:
     """Get all available components by category."""
-    components = {}
-    for category in MODULE_CATEGORIES:
-        if category.modules:
-            components[category.name] = category.modules
-    return components
-
-
-def interactive_select(
-    category: ModuleCategory, components: List[str]
-) -> Optional[str]:
-    """Provide interactive selection for components with colored output."""
-    if not components:
-        logger.warning(f"No {category.name} available.")
-        return None
-
-    print(
-        f"\n{Fore.WHITE}{Style.BRIGHT}Available {category.color}{category.name}{Style.RESET_ALL}:"
-    )
-
-    for i, component in enumerate(components, 1):
-        print(
-            f"{Fore.LIGHTWHITE_EX}{i}.{Style.RESET_ALL} {Fore.YELLOW}{component}{Style.RESET_ALL}"
-        )
-
-    while True:
-        try:
-            choice = input(
-                f"\n{Fore.WHITE}Select {category.name.lower()} ({Fore.GREEN}1-{len(components)}{Fore.WHITE}, or {Fore.RED}0{Fore.WHITE} to skip): {Style.RESET_ALL}"
-            )
-            if choice == "0":
-                return None
-            idx = int(choice) - 1
-            if 0 <= idx < len(components):
-                return components[idx]
-            print(f"{Fore.RED}Invalid selection. Please try again.{Style.RESET_ALL}")
-        except ValueError:
-            print(f"{Fore.RED}Please enter a valid number.{Style.RESET_ALL}")
+    return {
+        category.name: category.modules
+        for category in MODULE_CATEGORIES
+        if category.modules
+    }
 
 
 def _handle_errors(errors: List[Tuple[str, Exception]]) -> None:
@@ -121,7 +82,7 @@ def _handle_errors(errors: List[Tuple[str, Exception]]) -> None:
 
 def _get_registered_components(category_name: str) -> List[str]:
     """Get the registered components for a specific category."""
-    from utils.register import Registers
+    from .register import Registers
 
     registry_map = {
         "model_config": Registers.model_config_registry,
@@ -147,9 +108,9 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
         return {}
 
     selected_components = {}
+    errors = []
 
     # First, import all modules to register components
-    errors = []
     for category in MODULE_CATEGORIES:
         for name in category.modules:
             if name:
@@ -166,7 +127,6 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
                     logger.error(f"Unexpected error while importing {name}: {str(e)}")
                     errors.append((name, e))
 
-    # Now handle interactive selection with registered components
     if interactive:
         print(
             f"\n{Fore.WHITE}{Style.BRIGHT}{'='*20} Component Selection {'='*20}{Style.RESET_ALL}"
@@ -174,14 +134,14 @@ def import_modules(interactive: bool = False) -> Dict[str, str]:
 
         for category in MODULE_CATEGORIES:
             try:
-                # For config categories, use registered components instead of file names
-                if category.name in ["model_config", "trainer_config"]:
-                    registered_components = _get_registered_components(category.name)
-                    if registered_components:
-                        selected = interactive_select(category, registered_components)
-                        if selected:
-                            selected_components[category.name] = selected
-                elif category.modules:
+                # Always use registered components for all categories
+                registered_components = _get_registered_components(category.name)
+                if registered_components:
+                    selected = interactive_select(category, registered_components)
+                    if selected:
+                        selected_components[category.name] = selected
+                elif category.modules and not registered_components:
+                    # Fallback to module names if no registered components found
                     selected = interactive_select(category, category.modules)
                     if selected:
                         selected_components[category.name] = selected
