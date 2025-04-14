@@ -31,7 +31,7 @@ class BaseModelConfig(BaseModel):
 class OptimizerConfig(BaseModel):
     """Base configuration class for optimizer."""
 
-    type: Literal["SGD", "Adam", "AdamW", "RMSprop"] = "Adam"
+    Name: Literal["SGD", "Adam", "AdamW", "RMSprop"] = "Adam"
     learning_rate: PositiveFloat = 1e-3
     weight_decay: float = Field(default=2e-5, ge=0)
 
@@ -77,7 +77,7 @@ class OptimizerConfig(BaseModel):
 class SchedulerConfig(BaseModel):
     """Base configuration class for scheduler."""
 
-    type: Literal[
+    Name: Literal[
         "StepLR", "ExponentialLR", "CosineAnnealingLR", "ReduceLROnPlateau"
     ] = "StepLR"
 

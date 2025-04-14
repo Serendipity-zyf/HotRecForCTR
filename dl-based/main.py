@@ -6,6 +6,7 @@ from utils import ColorLogger
 from utils import Registers
 from utils import import_modules
 from utils.display import pretty_dict
+from utils.model_utils import model_info
 
 logger = ColorLogger(name="CTRTrainScript")
 
@@ -27,7 +28,7 @@ def setup_components(selected):
     train_batch_size = trainer_cfg["train_batch_size"]
     test_batch_size = trainer_cfg["test_batch_size"]
 
-    # Obtain training and validation dataloaders
+    # Dataloader
     train_loader = dataset.get_dataloader(
         dataset.train_dataset, batch_size=train_batch_size, shuffle=True
     )
@@ -35,9 +36,12 @@ def setup_components(selected):
         dataset.val_dataset, batch_size=test_batch_size, shuffle=False
     )
 
-    # Model load
+    # Model
     model = Registers.model_registry[selected["model"]].from_config(model_cfg)
-    logger.info(f"Model Structure:\n {model}")
+
+    # Analyze model structure and parameters
+    logger.info("Analyzing model structure and parameters...")
+    model_info(model, batch_size=1)
 
     # Optimizer
     optimizer_cfg = trainer_cfg.pop("optimizer")
@@ -45,7 +49,7 @@ def setup_components(selected):
         model.parameters(), optimizer_cfg
     )
     logger.info(f"Optimizer:")
-    pretty_dict(optimizer_cfg)
+    pretty_dict(optimizer_cfg, title=f"{optimizer.name} Optimizer Config")
 
     # Scheduler
     scheduler_cfg = trainer_cfg.pop("scheduler")
@@ -53,15 +57,15 @@ def setup_components(selected):
         scheduler_cfg, optimizer
     )
     logger.info(f"Scheduler:")
-    pretty_dict(scheduler_cfg)
+    pretty_dict(scheduler_cfg, title=f"{scheduler.name} Scheduler Config")
 
-    # Loss function
+    # Loss
     loss_fn = Registers.loss_registry[selected["loss"]]()
-    logger.info(f"Loss Function: {loss_fn}")
+    logger.info(f"Loss Function: {loss_fn.name}")
 
     # Criterion
     criterion = Registers.metric_registry[selected["metric"]]()
-    logger.info(f"Criterion: {criterion}")
+    logger.info(f"Criterion: {criterion.name}")
 
     return {
         "model": model,
@@ -83,8 +87,8 @@ def main():
     components = setup_components(selected)
 
     # Show all available components
-    logger.info("Selected components:")
-    pretty_dict(selected)
+    logger.info("Summarization of Selected Components:")
+    pretty_dict(selected, title="Selected")
 
     # TODO: Initialize trainer and start training
 
