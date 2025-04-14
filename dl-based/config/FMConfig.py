@@ -2,7 +2,6 @@ from typing import List
 from typing import Literal
 from typing import Optional
 from typing import Union
-from pydantic import Field
 from pydantic.types import PositiveInt
 from pydantic.types import PositiveFloat
 
@@ -17,7 +16,7 @@ from .base_config import SchedulerConfig
 class FMConfig(BaseModelConfig):
     """Configuration for FM model."""
 
-    Type: Literal["FMCTR"] = "FMCTR"
+    Name: Literal["FMCTR"] = "FMCTR"
     feature_dims: List[PositiveInt]
     dense_feature_dim: Optional[PositiveInt] = None
     embed_dim: PositiveInt = 8
@@ -42,7 +41,7 @@ FMSchedulerConfig = SchedulerConfig(
 class FMTrainerConfig(BaseTrainerConfig):
     """Configuration for FM trainer."""
 
-    Type: Literal["FMCTR"] = "FMCTR"
+    Name: Literal["FMCTR"] = "FMCTR"
     epochs: PositiveInt = 10
     train_batch_size: PositiveInt = 64
     test_batch_size: PositiveInt = 128

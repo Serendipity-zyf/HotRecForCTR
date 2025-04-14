@@ -11,6 +11,10 @@ from utils.register import Registers
 class StepLR(optim.lr_scheduler.StepLR):
     """StepLR scheduler implementation."""
 
+    def __init__(self, optimizer, step_size, gamma):
+        super().__init__(optimizer, step_size, gamma)
+        self.name = "StepLR"
+
     @classmethod
     def from_config(
         cls, config: Dict[str, Any], optimizer: optim.Optimizer

@@ -35,6 +35,7 @@ class CriteoDataset(Dataset):
         val_ratio: float = 0.2,
         seed: int = 42,
     ):
+        self.name: str = "CriteoDataset"
         self.X: Optional[List[Tuple]] = []
         self.y: Optional[torch.Tensor] = None
         self.scaler: Optional[Any] = None

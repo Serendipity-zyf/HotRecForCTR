@@ -19,6 +19,7 @@ class BCELoss(BaseLoss):
 
     def __init__(self, pos_weight: float = 1.0, reduction: str = "mean"):
         super().__init__()
+        self.name = "BCELoss"
         self.pos_weight = torch.tensor([pos_weight])
         self.loss_fn = nn.BCEWithLogitsLoss(
             pos_weight=self.pos_weight, reduction=reduction

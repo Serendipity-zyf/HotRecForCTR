@@ -11,6 +11,10 @@ from utils.register import Registers
 class CosineAnnealingLR(optim.lr_scheduler.CosineAnnealingLR):
     """CosineAnnealingLR scheduler implementation."""
 
+    def __init__(self, optimizer, T_max, eta_min):
+        super().__init__(optimizer, T_max, eta_min)
+        self.name = "CosineAnnealingLR"
+
     @classmethod
     def from_config(
         cls, config: Dict[str, Any], optimizer: optim.Optimizer

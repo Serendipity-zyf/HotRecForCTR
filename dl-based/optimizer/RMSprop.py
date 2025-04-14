@@ -30,6 +30,7 @@ class RMSprop(optim.RMSprop):
             momentum=momentum,
             centered=centered,
         )
+        self.name = "RMSprop"
 
     @classmethod
     def from_config(cls, params, config: Dict[str, Any]) -> "RMSprop":

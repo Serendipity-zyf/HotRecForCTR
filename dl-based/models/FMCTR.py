@@ -24,6 +24,7 @@ class FMCTR(nn.Module):
 
     def __init__(self, feature_dims: List[int], dense_feature_dim: int, embed_dim: int):
         super(FMCTR, self).__init__()
+        self.name = "FMCTR"
         self.embeddings = nn.ModuleList(
             [nn.Embedding(dim, embed_dim) for dim in feature_dims]
         )

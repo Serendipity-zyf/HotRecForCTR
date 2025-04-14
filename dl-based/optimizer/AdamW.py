@@ -26,6 +26,7 @@ class AdamW(optim.AdamW):
             eps=eps,
             weight_decay=weight_decay,
         )
+        self.name = "AdamW"
 
     @classmethod
     def from_config(cls, params, config: Dict[str, Any]) -> "AdamW":

@@ -22,6 +22,7 @@ class FocalLoss(BaseLoss):
         self, alpha: float = 0.25, gamma: float = 2.0, reduction: str = "mean"
     ):
         super().__init__()
+        self.name = "FocalLoss"
         self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction

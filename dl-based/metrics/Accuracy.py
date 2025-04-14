@@ -23,6 +23,7 @@ class AccuracyMetric(nn.Module):
             threshold: Classification threshold for converting probabilities to predictions
         """
         super().__init__()
+        self.name = "AccuracyMetric"
         self.threshold = threshold
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> float:

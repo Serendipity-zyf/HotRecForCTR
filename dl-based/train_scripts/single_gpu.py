@@ -29,6 +29,7 @@ class SingleGPUTrainScript(object):
         is_scheduler: bool,
         device: str,
     ):
+        self.name = "SingleGPUTrainScript"
         self.epochs = epochs
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size

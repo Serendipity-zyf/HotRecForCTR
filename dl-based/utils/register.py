@@ -106,12 +106,12 @@ def build_from_config(config: Union[Dict, Any], registry: Register) -> Any:
             f"Config must be either a dictionary or a dataclass instance, got {type(config)}"
         )
     # Get type and remove from configuration
-    obj_type = config_dict.pop("Type", None)
+    obj_type = config_dict.pop("Name", None)
     if obj_type is None:
-        raise ValueError("Config must contain a 'Type' field")
+        raise ValueError("Config must contain a 'Name' field")
 
     if obj_type not in registry:
-        raise KeyError(f"Type {obj_type} not found in registry {registry._name}")
+        raise KeyError(f"Component {obj_type} not found in registry {registry._name}")
 
     # Retrieve class and build an instance
     obj_cls = registry[obj_type]

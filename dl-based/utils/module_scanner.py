@@ -2,14 +2,17 @@
 Module scanner functionality.
 """
 
-import importlib
 import os
-from typing import Dict, List, Tuple, Optional
+import importlib
 
-from colorama import Fore, Style
+from typing import Dict
+from typing import List
+from typing import Tuple
+from colorama import Fore
+from colorama import Style
 from .logger import ColorLogger
-from .interactive_selector import interactive_select
 from .types import ModuleCategory
+from .interactive_selector import interactive_select
 
 logger = ColorLogger(name="ModuleScanner")
 

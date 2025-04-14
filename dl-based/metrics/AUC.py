@@ -18,6 +18,7 @@ class AUCMetric(nn.Module):
 
     def __init__(self):
         super().__init__()
+        self.name = "AUCMetric"
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> float:
         """

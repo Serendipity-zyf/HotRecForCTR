@@ -11,6 +11,10 @@ from utils.register import Registers
 class ReduceLROnPlateau(optim.lr_scheduler.ReduceLROnPlateau):
     """ReduceLROnPlateau scheduler implementation."""
 
+    def __init__(self, optimizer, mode, factor, patience):
+        super().__init__(optimizer, mode, factor, patience)
+        self.name = "ReduceLROnPlateau"
+
     @classmethod
     def from_config(
         cls, config: Dict[str, Any], optimizer: optim.Optimizer

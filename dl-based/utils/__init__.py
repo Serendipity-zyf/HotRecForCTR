@@ -12,6 +12,9 @@ from .progress import create_progress_bar
 from .register import Register
 from .register import Registers
 from .register import build_from_config
+from .display import display_dict
+from .display import display_nested_dict
+from .display import pretty_dict
 
 
 __all__ = [
@@ -25,4 +28,7 @@ __all__ = [
     "import_modules",
     "MODULE_CATEGORIES",
     "ModuleCategory",
+    "display_dict",
+    "display_nested_dict",
+    "pretty_dict",
 ]

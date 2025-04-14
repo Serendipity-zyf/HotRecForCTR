@@ -11,6 +11,10 @@ from utils.register import Registers
 class ExponentialLR(optim.lr_scheduler.ExponentialLR):
     """ExponentialLR scheduler implementation."""
 
+    def __init__(self, optimizer, gamma):
+        super().__init__(optimizer, gamma)
+        self.name = "ExponentialLR"
+
     @classmethod
     def from_config(
         cls, config: Dict[str, Any], optimizer: optim.Optimizer

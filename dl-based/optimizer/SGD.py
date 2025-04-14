@@ -30,6 +30,7 @@ class SGD(optim.SGD):
             weight_decay=weight_decay,
             nesterov=nesterov,
         )
+        self.name = "SGD"
 
     @classmethod
     def from_config(cls, params, config: Dict[str, Any]) -> "SGD":
