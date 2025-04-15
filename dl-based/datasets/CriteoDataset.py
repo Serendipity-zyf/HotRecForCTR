@@ -104,9 +104,7 @@ class CriteoDataset(Dataset):
     def __getitem__(self, idx) -> Tuple[torch.Tensor]:
         return self.X[idx][0], self.X[idx][1], self.y[idx]
 
-    def train_val_split(
-        self, val_ratio: float = 0.2, seed: int = 42
-    ) -> Tuple[Dataset, Dataset]:
+    def train_val_split(self, val_ratio: float = 0.2, seed: int = 42) -> Tuple[Dataset, Dataset]:
         """Split dataset into training and validation sets.
 
         Args:
@@ -120,13 +118,9 @@ class CriteoDataset(Dataset):
         val_size = int(total_size * val_ratio)
         train_size = total_size - val_size
 
-        train_dataset, val_dataset = random_split(
-            self, [train_size, val_size], generator=torch.Generator().manual_seed(seed)
-        )
+        train_dataset, val_dataset = random_split(self, [train_size, val_size], generator=torch.Generator().manual_seed(seed))
 
-        logger.info(
-            f"Dataset split: {train_size} training samples, {val_size} validation samples"
-        )
+        logger.info(f"Dataset split: {train_size} training samples, {val_size} validation samples")
         return train_dataset, val_dataset
 
     @staticmethod

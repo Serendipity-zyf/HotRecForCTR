@@ -6,7 +6,6 @@ from utils import ColorLogger
 from utils import Registers
 from utils import import_modules
 from utils.display import pretty_dict
-from utils.model_utils import model_info
 
 logger = ColorLogger(name="CTRTrainScript")
 
@@ -19,12 +18,12 @@ def setup_components(selected):
     )
 
     # Load configurations
+    feature_dims = dataset.feature_dims
+    dense_feature_dim = dataset.dense_feature_dim
     model_cfg = Registers.model_config_registry[selected["model_config"]](
-        feature_dims=dataset.feature_dims, dense_feature_dim=dataset.dense_feature_dim
+        feature_dims=feature_dims, dense_feature_dim=dense_feature_dim
     )
-    trainer_cfg = Registers.trainer_config_registry[
-        selected["trainer_config"]
-    ]().to_dict()
+    trainer_cfg = Registers.trainer_config_registry[selected["trainer_config"]]().to_dict()
     train_batch_size = trainer_cfg["train_batch_size"]
     test_batch_size = trainer_cfg["test_batch_size"]
 
@@ -41,7 +40,7 @@ def setup_components(selected):
 
     # Analyze model structure and parameters
     logger.info("Analyzing model structure and parameters...")
-    model_info(model, batch_size=1)
+    print(model)
 
     # Optimizer
     optimizer_cfg = trainer_cfg.pop("optimizer")

@@ -16,8 +16,6 @@ class ExponentialLR(optim.lr_scheduler.ExponentialLR):
         self.name = "ExponentialLR"
 
     @classmethod
-    def from_config(
-        cls, config: Dict[str, Any], optimizer: optim.Optimizer
-    ) -> "ExponentialLR":
+    def from_config(cls, config: Dict[str, Any], optimizer: optim.Optimizer) -> "ExponentialLR":
         """Create scheduler from config."""
         return cls(optimizer, gamma=config["gamma"])

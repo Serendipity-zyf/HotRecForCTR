@@ -25,9 +25,7 @@ class FMCTR(nn.Module):
     def __init__(self, feature_dims: List[int], dense_feature_dim: int, embed_dim: int):
         super(FMCTR, self).__init__()
         self.name = "FMCTR"
-        self.embeddings = nn.ModuleList(
-            [nn.Embedding(dim, embed_dim) for dim in feature_dims]
-        )
+        self.embeddings = nn.ModuleList([nn.Embedding(dim, embed_dim) for dim in feature_dims])
         self.dense_layer = nn.Linear(dense_feature_dim, embed_dim)
 
     def forward(self, dense_x: torch.Tensor, discrete_x: torch.Tensor) -> torch.Tensor:

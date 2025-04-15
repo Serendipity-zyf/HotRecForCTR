@@ -16,9 +16,7 @@ class CosineAnnealingLR(optim.lr_scheduler.CosineAnnealingLR):
         self.name = "CosineAnnealingLR"
 
     @classmethod
-    def from_config(
-        cls, config: Dict[str, Any], optimizer: optim.Optimizer
-    ) -> "CosineAnnealingLR":
+    def from_config(cls, config: Dict[str, Any], optimizer: optim.Optimizer) -> "CosineAnnealingLR":
         """Create scheduler from config."""
         params = {"T_max": config["T_max"], "eta_min": config["eta_min"]}
         # Remove None values

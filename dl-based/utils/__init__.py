@@ -15,8 +15,6 @@ from .register import build_from_config
 from .display import display_dict
 from .display import display_nested_dict
 from .display import pretty_dict
-from .model_utils import analyze_model
-from .model_utils import model_info
 
 
 __all__ = [
@@ -33,6 +31,4 @@ __all__ = [
     "display_dict",
     "display_nested_dict",
     "pretty_dict",
-    "analyze_model",
-    "model_info",
 ]

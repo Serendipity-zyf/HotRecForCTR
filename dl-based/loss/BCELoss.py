@@ -21,9 +21,7 @@ class BCELoss(BaseLoss):
         super().__init__()
         self.name = "BCELoss"
         self.pos_weight = torch.tensor([pos_weight])
-        self.loss_fn = nn.BCEWithLogitsLoss(
-            pos_weight=self.pos_weight, reduction=reduction
-        )
+        self.loss_fn = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight, reduction=reduction)
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """

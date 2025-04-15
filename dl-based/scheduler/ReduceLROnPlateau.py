@@ -16,9 +16,7 @@ class ReduceLROnPlateau(optim.lr_scheduler.ReduceLROnPlateau):
         self.name = "ReduceLROnPlateau"
 
     @classmethod
-    def from_config(
-        cls, config: Dict[str, Any], optimizer: optim.Optimizer
-    ) -> "ReduceLROnPlateau":
+    def from_config(cls, config: Dict[str, Any], optimizer: optim.Optimizer) -> "ReduceLROnPlateau":
         """Create scheduler from config."""
         return cls(
             optimizer,
