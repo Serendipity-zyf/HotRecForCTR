@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.logger import ColorLogger
-from torchprint import analyze_model
+from torchinsight import analyze_model
 from models.FMCTR import FMCTR
 
 logger = ColorLogger(name="CompleteDemo")
