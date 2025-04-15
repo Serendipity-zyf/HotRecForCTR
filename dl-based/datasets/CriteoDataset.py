@@ -62,12 +62,12 @@ class CriteoDataset(Dataset):
     def _preprocess(self) -> None:
         logger.info("Preprocessing data...")
         # Get feature dimensions
-        self.feature_dims = self.pd_data.iloc[:, 13:].nunique().tolist()
+        self.feature_dims = self.pd_data.iloc[:, self.dense_feature_dim + 1 :].nunique().tolist()
         # Extract features and labels
         X = self.pd_data.iloc[:, 1:].values  # Features (columns 1-39)
         y = self.pd_data.iloc[:, 0].values  # Labels (column 0)
-        dense_x = X[:, :13]
-        discrete_x = X[:, 13:]
+        dense_x = X[:, : self.dense_feature_dim]
+        discrete_x = X[:, self.dense_feature_dim :]
         # Scaling
         if self.scaled == "MinMaxScaler":
             from sklearn.preprocessing import MinMaxScaler
@@ -96,7 +96,8 @@ class CriteoDataset(Dataset):
         # show describe
         logger.info(f"Data description: \n{self.pd_data.describe()}")
         logger.info(f"Data sample: \n{self.pd_data.head()}")
-        logger.info(f"Data feature dimension list: \n{self.feature_dims}")
+        logger.info(f"Dataset dense feature dimension: {self.dense_feature_dim}")
+        logger.info(f"Dataset discrete feature dimensions: {len(self.feature_dims)}")
 
     def __len__(self) -> int:
         return len(self.pd_data)
@@ -118,7 +119,9 @@ class CriteoDataset(Dataset):
         val_size = int(total_size * val_ratio)
         train_size = total_size - val_size
 
-        train_dataset, val_dataset = random_split(self, [train_size, val_size], generator=torch.Generator().manual_seed(seed))
+        train_dataset, val_dataset = random_split(
+            self, [train_size, val_size], generator=torch.Generator().manual_seed(seed)
+        )
 
         logger.info(f"Dataset split: {train_size} training samples, {val_size} validation samples")
         return train_dataset, val_dataset

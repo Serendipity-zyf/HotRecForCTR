@@ -86,6 +86,10 @@ class ModelAnalyzer:
         self.module_info = {}
         self.input_output_sizes = {}
 
+        # For memory tracking
+        self.input_memory_size = 0
+        self.activation_memory_size = 0
+
         # For tree structure tracking
         self.module_depth_idx = {}
         self.depth_counts = {}
@@ -100,6 +104,7 @@ class ModelAnalyzer:
         dtypes: Optional[List[torch.dtype]] = None,
         long_indices: Optional[List[int]] = None,
         batch_size: int = 1,
+        min_discrete_size: int = 1,
     ) -> None:
         """
         Analyze the model structure, parameters, and computational complexity.
@@ -114,6 +119,7 @@ class ModelAnalyzer:
             long_indices: List of indices for inputs that should have torch.long dtype.
                           For example, [1] means the second input should be torch.long.
             batch_size: Batch size to use when creating random tensors. Defaults to 1.
+            min_discrete_size: Minimum discrete value for torch.long tensors. Defaults to 1.
         """
         # Prepare input data if not provided
         if input_data is None:
@@ -146,7 +152,7 @@ class ModelAnalyzer:
                     # Create tensor with appropriate batch size and dimensions
                     if dtype == torch.long:
                         # For long dtype, create integer tensor directly
-                        input_data = torch.randint(0, 2, (batch_size,) + input_dims)
+                        input_data = torch.randint(0, min_discrete_size, (batch_size,) + input_dims)
                     else:
                         input_data = torch.rand(
                             (batch_size,) + input_dims,
@@ -169,7 +175,7 @@ class ModelAnalyzer:
                         # Create tensor with appropriate batch size and dimensions
                         if dtype == torch.long:
                             # For long dtype, create integer tensor directly
-                            tensor = torch.randint(0, 10, (batch_size,) + dims)
+                            tensor = torch.randint(0, min_discrete_size, (batch_size,) + dims)
                         else:
                             tensor = torch.rand((batch_size,) + dims, dtype=dtype)
 
@@ -178,6 +184,12 @@ class ModelAnalyzer:
         # Get input and output sizes for each module
         if input_data is not None:
             self.input_output_sizes = get_input_output_sizes(self.model, input_data, self.device)
+
+            # Calculate input data memory size
+            if isinstance(input_data, (list, tuple)):
+                self.input_memory_size = sum(x.nelement() * x.element_size() for x in input_data)
+            else:
+                self.input_memory_size = input_data.nelement() * input_data.element_size()
 
         # Count parameters
         self.total_params, self.trainable_params = count_parameters(self.model)
@@ -212,6 +224,30 @@ class ModelAnalyzer:
             # Estimate memory usage
             memory = estimate_memory_usage(module, input_size, output_size)
             self.total_memory += memory
+
+            # Add to activation memory if this is an activation-producing module
+            if output_size is not None:
+                # Estimate activation memory (output tensors that need to be stored for backward pass)
+                # For simplicity, we assume all outputs need to be stored for backward pass
+                if isinstance(output_size, (list, tuple)) and not isinstance(output_size[0], int):
+                    # Multiple output tensors
+                    for size in output_size:
+                        if size is not None:
+                            # Estimate bytes per element (assuming float32 by default)
+                            bytes_per_element = 4  # float32 is 4 bytes
+                            elements = 1
+                            for dim in size:
+                                elements *= dim
+                            self.activation_memory_size += elements * bytes_per_element
+                else:
+                    # Single output tensor
+                    if output_size is not None:
+                        # Estimate bytes per element (assuming float32 by default)
+                        bytes_per_element = 4  # float32 is 4 bytes
+                        elements = 1
+                        for dim in output_size:
+                            elements *= dim
+                        self.activation_memory_size += elements * bytes_per_element
 
             # Store module info
             self.module_info[name] = {
@@ -533,8 +569,12 @@ class ModelAnalyzer:
         lines.append(create_separator(col_widths))
 
         # Add memory usage
-        input_size = 0  # Placeholder for input size
-        forward_backward_size = 0  # Placeholder for forward/backward pass size
+        input_size = self.input_memory_size  # Calculated from input data
+        # For forward/backward pass, we use the activation memory size
+        # For backward pass, we typically need to store gradients of similar size
+        forward_backward_size = (
+            self.activation_memory_size * 2
+        )  # Account for both activations and gradients
         params_size = sum(p.nelement() * p.element_size() for p in self.model.parameters())
         total_size = params_size + input_size + forward_backward_size
 

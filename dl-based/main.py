@@ -6,6 +6,7 @@ from utils import ColorLogger
 from utils import Registers
 from utils import import_modules
 from utils.display import pretty_dict
+from torchinsight import analyze_model
 
 logger = ColorLogger(name="CTRTrainScript")
 
@@ -23,6 +24,7 @@ def setup_components(selected):
     model_cfg = Registers.model_config_registry[selected["model_config"]](
         feature_dims=feature_dims, dense_feature_dim=dense_feature_dim
     )
+    print(model_cfg)
     trainer_cfg = Registers.trainer_config_registry[selected["trainer_config"]]().to_dict()
     train_batch_size = trainer_cfg["train_batch_size"]
     test_batch_size = trainer_cfg["test_batch_size"]
@@ -37,10 +39,17 @@ def setup_components(selected):
 
     # Model
     model = Registers.model_registry[selected["model"]].from_config(model_cfg)
-
     # Analyze model structure and parameters
     logger.info("Analyzing model structure and parameters...")
-    print(model)
+    print(
+        analyze_model(
+            model,
+            model_name="FMCTR",
+            input_dims=[(dense_feature_dim,), (len(feature_dims),)],
+            long_indices=[1],
+            batch_size=train_batch_size,
+        )
+    )
 
     # Optimizer
     optimizer_cfg = trainer_cfg.pop("optimizer")
