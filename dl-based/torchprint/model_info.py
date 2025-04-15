@@ -69,7 +69,9 @@ class ModelAnalyzer:
         """
         self.model = model
         self.model_name = model_name or model.__class__.__name__
-        self.device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
+        self.device = device or (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
         self.input_dtypes = input_dtypes or [torch.float32]
 
         # Move model to the specified device
@@ -90,7 +92,9 @@ class ModelAnalyzer:
 
     def analyze(
         self,
-        input_data: Optional[Union[torch.Tensor, Tuple[torch.Tensor, ...], List[torch.Tensor]]] = None,
+        input_data: Optional[
+            Union[torch.Tensor, Tuple[torch.Tensor, ...], List[torch.Tensor]]
+        ] = None,
         input_size: Optional[Union[Tuple[int, ...], List[Tuple[int, ...]]]] = None,
         input_dims: Optional[Union[Tuple[int, ...], List[Tuple[int, ...]]]] = None,
         dtypes: Optional[List[torch.dtype]] = None,
@@ -117,13 +121,17 @@ class ModelAnalyzer:
                 # Create random tensors with the specified sizes
                 if isinstance(input_size, tuple) and all(isinstance(x, int) for x in input_size):
                     # Single input tensor
-                    input_data = torch.rand(input_size, dtype=dtypes[0] if dtypes else self.input_dtypes[0])
+                    input_data = torch.rand(
+                        input_size, dtype=dtypes[0] if dtypes else self.input_dtypes[0]
+                    )
                 else:
                     # Multiple input tensors
                     input_data = [
                         torch.rand(
                             size,
-                            dtype=(dtypes[i] if dtypes and i < len(dtypes) else self.input_dtypes[0]),
+                            dtype=(
+                                dtypes[i] if dtypes and i < len(dtypes) else self.input_dtypes[0]
+                            ),
                         )
                         for i, size in enumerate(input_size)
                     ]
@@ -250,6 +258,43 @@ class ModelAnalyzer:
         prefix = name + "."
         return not any(other_name.startswith(prefix) for other_name in self.module_info.keys())
 
+    def _calculate_max_name_length(self, max_depth: int) -> int:
+        """Calculate the maximum length of formatted module names."""
+        max_length = len(self.model_name)  # Start with root module name length
+
+        # Helper function to calculate formatted name length
+        def get_formatted_name_length(name: str, depth: int) -> int:
+            if depth == 0:
+                return len(name)
+
+            # Get module info
+            info = self.module_info.get(name, {})
+            module_type = info.get("type", "")
+            depth_idx = info.get("depth_idx", "")
+
+            # Get the short name (last part of the full name)
+            short_name = name.split(".")[-1]
+
+            # Calculate tree prefix length (approximately)
+            prefix_length = depth * 4  # Each level adds about 4 characters
+
+            # Calculate total visible length
+            if depth_idx:
+                return (
+                    prefix_length + len(short_name) + len(module_type) + len(depth_idx) + 4
+                )  # 4 for separators
+            else:
+                return prefix_length + len(short_name) + len(module_type) + 2  # 2 for separator
+
+        # Check all modules
+        for name in self.module_info.keys():
+            depth = len(name.split("."))
+            if depth <= max_depth:
+                name_length = get_formatted_name_length(name, depth)
+                max_length = max(max_length, name_length)
+
+        return max_length
+
     def _get_parent_name(self, name: str) -> str:
         """Get the parent module name."""
         parts = name.split(".")
@@ -258,21 +303,44 @@ class ModelAnalyzer:
         return ".".join(parts[:-1])
 
     def _get_child_modules(self, name: str) -> List[str]:
-        """Get the direct child modules of a module."""
-        prefix = name + "." if name else ""
-        children = []
-        for other_name in self.module_info.keys():
-            if other_name.startswith(prefix) and other_name != name:
-                # Check if it's a direct child
-                remaining = other_name[len(prefix) :]
-                if "." not in remaining:
-                    children.append(other_name)
-        return sorted(children)
+        """Get the direct child modules of a module in their registration order."""
+        if name == "":
+            # For the root module, get the top-level modules in their registration order
+            module = self.model
+            return [child_name for child_name in module._modules.keys()]
+        else:
+            # For non-root modules, find the module and get its children
+            module = self.model
+            for part in name.split("."):
+                if part in module._modules:
+                    module = module._modules[part]
+                else:
+                    # Module not found, fall back to the old method
+                    prefix = name + "." if name else ""
+                    children = []
+                    for other_name in self.module_info.keys():
+                        if other_name.startswith(prefix) and other_name != name:
+                            # Check if it's a direct child
+                            remaining = other_name[len(prefix) :]
+                            if "." not in remaining:
+                                children.append(other_name)
+                    return sorted(children)
+
+            # Get the children of this module in their registration order
+            return [f"{name}.{child_name}" for child_name in module._modules.keys()]
 
     def _format_module_tree(self, name: str = "", depth: int = 0, max_depth: int = 3) -> List[str]:
         """Format the module tree for display."""
         lines = []
         prefix_dict = {}  # Track vertical lines for tree structure
+
+        # First pass: calculate the maximum module name length
+        max_name_length = self._calculate_max_name_length(max_depth)
+        # Ensure minimum width of 40 characters
+        col_width_name = max(40, max_name_length + 5)  # Add some padding
+
+        # Adjust column widths
+        col_widths = [col_width_name, 20, 20, 12, 12, 10]
 
         if depth > max_depth:
             return lines
@@ -301,12 +369,13 @@ class ModelAnalyzer:
                     last_module = all_modules[-1]
                     root_output_size = self.input_output_sizes[last_module]["output_size"]
 
-            # Format each column with fixed width and color
-            col_widths = [40, 20, 20, 12, 12, 10]  # Same as in create_header
+            # Format each column with adjusted width and color
             col1 = format_with_color(self.model_name, col_widths[0], LAYER_NAME_COLOR)
             col2 = format_with_color(format_size(root_input_size), col_widths[1], SHAPE_COLOR)
             col3 = format_with_color(format_size(root_output_size), col_widths[2], SHAPE_COLOR)
-            col4 = format_with_color(format_param_count(self.total_params), col_widths[3], PARAM_COLOR)
+            col4 = format_with_color(
+                format_param_count(self.total_params), col_widths[3], PARAM_COLOR
+            )
             col5 = format_with_color(format_flops(self.total_macs), col_widths[4], MACS_COLOR)
             col6 = colorize_trainable(True)
 
@@ -314,16 +383,34 @@ class ModelAnalyzer:
             line = f"{col1}{col2}{col3}{col4}{col5}{col6}"
             lines.append(line)
 
-            # Add child modules
+            # Add child modules in their registration order
             children = self._get_child_modules("")
-            for i, child in enumerate(children):
-                is_last = i == len(children) - 1
-                child_lines = self._format_module_tree_recursive(child, depth + 1, max_depth, is_last, prefix_dict.copy())
+
+            # Convert child names to full module names
+            full_children = []
+            for child_name in children:
+                # Check if the child name exists in module_info
+                if child_name in self.module_info:
+                    full_children.append(child_name)
+                else:
+                    # Try to find it with the full path
+                    for module_name in self.module_info.keys():
+                        if module_name.endswith("." + child_name) or module_name == child_name:
+                            full_children.append(module_name)
+                            break
+
+            for i, child in enumerate(full_children):
+                is_last = i == len(full_children) - 1
+                child_lines = self._format_module_tree_recursive(
+                    child, depth + 1, max_depth, is_last, prefix_dict.copy(), col_widths
+                )
                 lines.extend(child_lines)
 
             return lines
 
-        return self._format_module_tree_recursive(name, depth, max_depth, False, prefix_dict)
+        return self._format_module_tree_recursive(
+            name, depth, max_depth, False, prefix_dict, col_widths
+        )
 
     def _format_module_tree_recursive(
         self,
@@ -332,6 +419,7 @@ class ModelAnalyzer:
         max_depth: int,
         is_last: bool,
         prefix_dict: Dict[int, bool],
+        col_widths: List[int] = None,
     ) -> List[str]:
         """Recursively format the module tree for display."""
         if depth > max_depth:
@@ -353,10 +441,13 @@ class ModelAnalyzer:
         short_name = name.split(".")[-1]
 
         # Format the line with tree structure
-        module_name = format_layer_name(short_name, module_type, depth, is_last, prefix_dict, depth_idx)
+        module_name = format_layer_name(
+            short_name, module_type, depth, is_last, prefix_dict, depth_idx
+        )
 
-        # Format each column with fixed width and color
-        col_widths = [40, 20, 20, 12, 12, 10]  # Same as in create_header
+        # Use provided column widths or default
+        if col_widths is None:
+            col_widths = [40, 20, 20, 12, 12, 10]  # Default widths
 
         # For the first column (module name), we don't use format_with_color because it already has colors
         # and tree structure. Instead, we'll calculate the padding manually.
@@ -378,7 +469,9 @@ class ModelAnalyzer:
         children = self._get_child_modules(name)
         for i, child in enumerate(children):
             child_is_last = i == len(children) - 1
-            child_lines = self._format_module_tree_recursive(child, depth + 1, max_depth, child_is_last, prefix_dict.copy())
+            child_lines = self._format_module_tree_recursive(
+                child, depth + 1, max_depth, child_is_last, prefix_dict.copy(), col_widths
+            )
             lines.extend(child_lines)
 
         return lines
@@ -395,33 +488,49 @@ class ModelAnalyzer:
         """
         lines = []
 
+        # First pass: calculate the maximum module name length
+        max_name_length = self._calculate_max_name_length(max_depth)
+        # Ensure minimum width of 40 characters
+        col_width_name = max(40, max_name_length + 5)  # Add some padding
+
+        # Adjust column widths
+        col_widths = [col_width_name, 20, 20, 12, 12, 10]
+
         # Add title
         lines.append(f"{TITLE_COLOR}{self.model_name} Model Analysis{Style.RESET_ALL}")
-        lines.append(create_separator())
+        lines.append(create_separator(col_widths))
 
         # Add model info
         lines.append(f"{HEADER_COLOR}Model Name:{Style.RESET_ALL} {self.model_name}")
         lines.append(f"{HEADER_COLOR}Analysis device:{Style.RESET_ALL} {self.device}")
-        lines.append(create_separator())
+        lines.append(create_separator(col_widths))
 
         # Add header
-        lines.append(create_header())
-        lines.append(create_separator())
+        lines.append(create_header(col_widths))
+        lines.append(create_separator(col_widths))
 
         # Add module tree
         tree_lines = self._format_module_tree(max_depth=max_depth)
         lines.extend(tree_lines)
 
         # Add summary
-        lines.append(create_separator())
-        lines.append(f"{SUMMARY_COLOR}Total params:{Style.RESET_ALL} {PARAM_COLOR}{self.total_params:,}{Style.RESET_ALL}")
-        lines.append(f"{SUMMARY_COLOR}Trainable params:{Style.RESET_ALL} {PARAM_COLOR}{self.trainable_params:,}{Style.RESET_ALL}")
+        lines.append(create_separator(col_widths))
+        lines.append(
+            f"{SUMMARY_COLOR}Total params:{Style.RESET_ALL} {PARAM_COLOR}{self.total_params:,}{Style.RESET_ALL}"
+        )
+        lines.append(
+            f"{SUMMARY_COLOR}Trainable params:{Style.RESET_ALL} {PARAM_COLOR}{self.trainable_params:,}{Style.RESET_ALL}"
+        )
         lines.append(
             f"{SUMMARY_COLOR}Non-trainable params:{Style.RESET_ALL} {PARAM_COLOR}{self.total_params - self.trainable_params:,}{Style.RESET_ALL}"
         )
-        lines.append(f"{SUMMARY_COLOR}Total mult-adds:{Style.RESET_ALL} {MACS_COLOR}{format_flops(self.total_macs)}{Style.RESET_ALL}")
-        lines.append(f"{SUMMARY_COLOR}Total FLOPs:{Style.RESET_ALL} {FLOPS_COLOR}{format_flops(self.total_flops)}{Style.RESET_ALL}")
-        lines.append(create_separator())
+        lines.append(
+            f"{SUMMARY_COLOR}Total mult-adds:{Style.RESET_ALL} {MACS_COLOR}{format_flops(self.total_macs)}{Style.RESET_ALL}"
+        )
+        lines.append(
+            f"{SUMMARY_COLOR}Total FLOPs:{Style.RESET_ALL} {FLOPS_COLOR}{format_flops(self.total_flops)}{Style.RESET_ALL}"
+        )
+        lines.append(create_separator(col_widths))
 
         # Add memory usage
         input_size = 0  # Placeholder for input size
@@ -430,9 +539,13 @@ class ModelAnalyzer:
         total_size = params_size + input_size + forward_backward_size
 
         lines.append(f"{MEMORY_COLOR}Input size:{Style.RESET_ALL} {format_bytes(input_size)}")
-        lines.append(f"{MEMORY_COLOR}Forward/backward pass size:{Style.RESET_ALL} {format_bytes(forward_backward_size)}")
+        lines.append(
+            f"{MEMORY_COLOR}Forward/backward pass size:{Style.RESET_ALL} {format_bytes(forward_backward_size)}"
+        )
         lines.append(f"{MEMORY_COLOR}Params size:{Style.RESET_ALL} {format_bytes(params_size)}")
-        lines.append(f"{MEMORY_COLOR}Estimated Total Size:{Style.RESET_ALL} {format_bytes(total_size)}")
+        lines.append(
+            f"{MEMORY_COLOR}Estimated Total Size:{Style.RESET_ALL} {format_bytes(total_size)}"
+        )
 
         return "\n".join(lines)
 

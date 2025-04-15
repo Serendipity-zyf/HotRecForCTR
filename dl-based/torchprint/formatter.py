@@ -6,6 +6,7 @@ import math
 import re
 from typing import Dict
 from typing import Tuple
+from typing import List
 from colorama import Fore, Style
 
 # Define color constants for different parts of the output
@@ -138,9 +139,10 @@ def format_layer_name(
             return f"{prefix}{LAYER_NAME_COLOR}{name}{Style.RESET_ALL}: {MODULE_TYPE_COLOR}{module_type}{Style.RESET_ALL}"
 
 
-def create_header() -> str:
+def create_header(col_widths: List[int] = None) -> str:
     """Create the header for the model analysis table."""
-    col_widths = [40, 20, 20, 12, 12, 10]
+    if col_widths is None:
+        col_widths = [40, 20, 20, 12, 12, 10]
 
     layer_col = format_with_color("Layer (type:depth-idx)", col_widths[0], HEADER_COLOR)
     input_col = format_with_color("Input Shape", col_widths[1], HEADER_COLOR)
@@ -152,9 +154,11 @@ def create_header() -> str:
     return layer_col + input_col + output_col + param_col + macs_col + train_col
 
 
-def create_separator() -> str:
+def create_separator(col_widths: List[int] = None) -> str:
     """Create a separator line for the model analysis table."""
-    total_width = sum([40, 20, 20, 12, 12, 10])  # Same as col_widths in create_header
+    if col_widths is None:
+        col_widths = [40, 20, 20, 12, 12, 10]  # Default widths
+    total_width = sum(col_widths)
     return f"{SEPARATOR_COLOR}{'=' * total_width}{Style.RESET_ALL}"
 
 

@@ -33,10 +33,16 @@
 - **FM（因子分解机）**：捕获特征间的二阶交互
 
 ### 工具
-- **注册机制**：用于模型、数据集等组件的管理系统
+- **Register**：用于模型、数据集等组件的管理系统
 - **ColorLogger**：具有多级别的自定义彩色日志
 - **ProgressBar**：基于alive_progress的增强进度跟踪
-- **TorchPrint**：PyTorch模型分析（参数、FLOPs、内存使用）
+- **TorchPrint**：自定义PyTorch模型分析工具
+    - 以美观的树形格式和彩色编码显示模型结构
+    - 计算每一层的参数（总数和可训练数）
+    - 计算FLOPs和MACs以分析计算复杂度
+    - 估算模型部署所需的内存使用量
+    - 支持不含批次大小的自定义输入维度指定
+    - 处理多种不同数据类型的多输入（包括用于索引的torch.long类型）
 
 ## 🔧 环境设置
 
@@ -64,6 +70,10 @@ python lr_gbdt.py
 # 运行深度学习模型（交互式组件选择）
 cd ../dl-based
 python main.py
+
+# 尝试工具演示
+python demo_progress.py  # 进度条演示
+python demo_torchprint.py  # 模型分析工具演示
 ```
 
 ## 📊 数据集
@@ -79,6 +89,35 @@ python main.py
 - PyTorch, pandas, numpy, scikit-learn
 - LightGBM, colorama, alive-progress
 - Pydantic（用于配置验证）
+
+## 📊 TorchPrint: 模型分析工具
+
+TorchPrint模块提供了PyTorch模型的详细分析，并具有美观的彩色输出：
+
+```python
+from torchprint import analyze_model
+
+# 基本用法
+summary = analyze_model(model)
+print(summary)
+
+# 高级用法与自定义输入规格
+summary = analyze_model(
+    model,
+    model_name="MyModel",
+    input_dims=[(13,), (5,)],  # 两个输入，维度分别为(13,)和(5,)
+    long_indices=[1],  # 第二个输入应为torch.long类型
+    batch_size=128,    # 指定分析的批次大小
+)
+```
+
+特点：
+- 模型层次结构的树形视图
+- 每一层的参数计数（总数和可训练数）
+- 每一层的输入和输出形状
+- 计算复杂度的FLOPs和MACs计算
+- 内存使用量估计
+- 支持不同数据类型的多输入
 
 ## 🔮 未来工作
 
