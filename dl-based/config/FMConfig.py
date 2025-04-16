@@ -42,7 +42,7 @@ class FMTrainerConfig(BaseTrainerConfig):
     """Configuration for FM trainer."""
 
     Name: Literal["FMCTR"] = "FMCTR"
-    epochs: PositiveInt = 10
+    epochs: PositiveInt = 20
     train_batch_size: PositiveInt = 512
     test_batch_size: PositiveInt = 1024
     grad_clip: PositiveFloat = 1.0

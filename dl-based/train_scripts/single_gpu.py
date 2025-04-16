@@ -7,6 +7,7 @@ import torch.optim as optim
 from typing import Any
 from typing import Dict
 from typing import Tuple
+from typing import Optional
 from torch.utils.data import DataLoader
 
 from utils.logger import ColorLogger
@@ -42,6 +43,11 @@ class SingleGPUTrainScript(object):
         self.best_metric = 0
         self.last_metric = 0
         self.early_stop_times = 0
+        self.wdb = None
+
+    def setup_wandb(self, wdb: Optional[Any]) -> None:
+        """Set up wandb logging."""
+        self.wdb = wdb
 
     def train(
         self,
@@ -111,12 +117,12 @@ class SingleGPUTrainScript(object):
 
             # Use log output instead of progress bar update
             logger.info(
-                f"\n{'*'*50}\n"
+                f"\n{'*'*75}\n"
                 f"Epoch [{epoch}/{self.epochs}] | "
                 f"Train Loss: {train_loss:.4f} | "
                 f"Val Loss: {val_loss:.4f} | "
-                f"Metric: {metric:.4f}\n"
-                f"{'*'*50}"
+                f"{criterion.name} Metric: {metric:.4f}\n"
+                f"{'*'*75}\n"
             )
 
             # Early stopping
@@ -141,7 +147,7 @@ class SingleGPUTrainScript(object):
         epoch_losses = []
 
         # Use ProgressBar for inner loop
-        logger.info(f"\n{'-'*20} Training Epoch {epoch} {'-'*20}")
+        logger.info(f"\n{'-'*35} Training Epoch {epoch} {'-'*35}")
         with ProgressBar(total=len(train_loader), title=f"Training") as bar:
             for batch in train_loader:
                 # Move data to device
@@ -162,10 +168,13 @@ class SingleGPUTrainScript(object):
                 epoch_losses.append(current_loss)
 
                 # Update progress bar with current loss
-                bar.text = f"Batch Loss: {current_loss:.4f}"
+                bar.text = f"[Batch Loss: {current_loss:.4f}]"
                 bar()
 
+        # Calculate and record average loss
         avg_loss = sum(epoch_losses) / len(train_loader)
+        if self.wdb:
+            self.wdb.log({"train_loss": avg_loss})
         self.train_loss.append(avg_loss)
         logger.info(f"Epoch {epoch} average train loss: {avg_loss:.4f}")
         return avg_loss
@@ -184,7 +193,7 @@ class SingleGPUTrainScript(object):
         targets = []
 
         # Use ProgressBar for validation loop
-        logger.info(f"\n{'-'*20} Validating Epoch {epoch} {'-'*20}")
+        logger.info(f"\n{'-'*35} Validating Epoch {epoch} {'-'*35}")
         with torch.inference_mode(), ProgressBar(total=len(val_loader), title=f"Validation") as bar:
             for batch in val_loader:
                 # Move data to device
@@ -200,7 +209,7 @@ class SingleGPUTrainScript(object):
                 val_losses.append(loss.item())
 
                 # Update progress bar with current loss
-                bar.text = f"Batch Loss: {loss.item():.4f}"
+                bar.text = f"[Batch Loss: {loss.item():.4f}]"
                 bar()
 
         # Calculate metrics
@@ -210,6 +219,8 @@ class SingleGPUTrainScript(object):
         metric = criterion(predictions, targets)
 
         # Record validation loss
+        if self.wdb:
+            self.wdb.log({"val_loss": avg_loss, f"{criterion.name}": metric})
         self.val_loss.append(avg_loss)
         logger.info(f"Epoch {epoch} validation - Loss: {avg_loss:.4f}, Metric: {metric:.4f}")
 

@@ -2,7 +2,6 @@
 
 import torch
 import torch.nn as nn
-from typing import Tuple
 from sklearn.metrics import accuracy_score
 
 from utils.register import Registers
@@ -23,7 +22,7 @@ class AccuracyMetric(nn.Module):
             threshold: Classification threshold for converting probabilities to predictions
         """
         super().__init__()
-        self.name = "AccuracyMetric"
+        self.name = "Accuracy"
         self.threshold = threshold
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> float:

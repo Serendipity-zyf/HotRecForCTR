@@ -2,9 +2,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Tuple
 from sklearn.metrics import roc_auc_score
-from sklearn.metrics import accuracy_score
 
 from utils.register import Registers
 
@@ -18,7 +16,7 @@ class AUCMetric(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.name = "AUCMetric"
+        self.name = "AUC"
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> float:
         """
