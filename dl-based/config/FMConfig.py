@@ -19,7 +19,7 @@ class FMConfig(BaseModelConfig):
     Name: Literal["FMCTR"] = "FMCTR"
     feature_dims: List[PositiveInt]
     dense_feature_dim: Optional[PositiveInt] = None
-    embed_dim: PositiveInt = 8
+    embed_dim: PositiveInt = 16
 
 
 FMOptimizerConfig = OptimizerConfig(
@@ -43,8 +43,8 @@ class FMTrainerConfig(BaseTrainerConfig):
 
     Name: Literal["FMCTR"] = "FMCTR"
     epochs: PositiveInt = 10
-    train_batch_size: PositiveInt = 64
-    test_batch_size: PositiveInt = 128
+    train_batch_size: PositiveInt = 512
+    test_batch_size: PositiveInt = 1024
     grad_clip: PositiveFloat = 1.0
     device: Union[Literal["cpu", "cuda", "auto"], str, List[str]] = "cuda:0"
     is_scheduler: bool = True

@@ -122,9 +122,7 @@ class ProgressBar(object):
             The progress bar update function.
         """
         # Apply colors to title if provided
-        colored_title = (
-            f"{self.title_color}{self.title}{Style.RESET_ALL}" if self.title else None
-        )
+        colored_title = f"{self.title_color}{self.title}{Style.RESET_ALL}" if self.title else None
 
         # Create the progress bar
         self.bar_context = alive_bar(
@@ -167,9 +165,7 @@ class ProgressBar(object):
             for _ in range(steps):
                 self.bar_func()
 
-    def process_items(
-        self, items: Iterable[T], process_func: Callable[[T], Any]
-    ) -> List[Any]:
+    def process_items(self, items: Iterable[T], process_func: Callable[[T], Any]) -> List[Any]:
         """
         Process a collection of items with a progress bar.
 
@@ -191,9 +187,7 @@ class ProgressBar(object):
         return results
 
     @classmethod
-    def timed(
-        cls, seconds: int, title: str = "Processing", step: float = 0.1, **kwargs
-    ):
+    def timed(cls, seconds: int, title: str = "Processing", step: float = 0.1, **kwargs):
         """
         Create a progress bar that runs for a specified number of seconds.
 
@@ -354,9 +348,7 @@ def process_with_progress(
     return progress_bar.process_items(items, process_func)
 
 
-def timed_progress(
-    seconds: int, title: str = "Processing", step: float = 0.1, **kwargs
-) -> None:
+def timed_progress(seconds: int, title: str = "Processing", step: float = 0.1, **kwargs) -> None:
     """
     Create a progress bar that runs for a specified number of seconds.
 

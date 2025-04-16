@@ -1,5 +1,6 @@
-import pandas as pd
 import torch
+import pandas as pd
+
 from typing import Any
 from typing import List
 from typing import Optional
@@ -84,7 +85,8 @@ class CriteoDataset(Dataset):
         else:
             logger.info(f"Using no scaler.")
 
-        dense_x = torch.from_numpy(dense_x)
+        # Use .float() to ensure it is of float32 type
+        dense_x = torch.from_numpy(dense_x).float()
         discrete_x = torch.from_numpy(discrete_x).long()
         self.y = torch.from_numpy(y).long()
         with ProgressBar(total=len(dense_x), title="Processing X") as bar:

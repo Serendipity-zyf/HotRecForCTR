@@ -20,8 +20,8 @@ class BCELoss(BaseLoss):
     def __init__(self, pos_weight: float = 1.0, reduction: str = "mean"):
         super().__init__()
         self.name = "BCELoss"
-        self.pos_weight = torch.tensor([pos_weight])
-        self.loss_fn = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight, reduction=reduction)
+        self.pos_weight_value = pos_weight
+        self.reduction = reduction
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """
@@ -34,4 +34,9 @@ class BCELoss(BaseLoss):
         Returns:
             loss value
         """
-        return self.loss_fn(pred, target)
+        if target.dtype != pred.dtype:
+            target = target.float()
+
+        pos_weight = torch.tensor([self.pos_weight_value], device=pred.device)
+        loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction=self.reduction)
+        return loss_fn(pred, target)

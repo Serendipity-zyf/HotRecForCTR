@@ -2,6 +2,7 @@
 Main script for deep learning-based CTR prediction.
 """
 
+import torch
 from utils import ColorLogger
 from utils import Registers
 from utils import import_modules
@@ -39,6 +40,7 @@ def setup_components(selected):
 
     # Model
     model = Registers.model_registry[selected["model"]].from_config(model_cfg)
+
     # Analyze model structure and parameters
     logger.info("Analyzing model structure and parameters...")
     print(
@@ -75,15 +77,22 @@ def setup_components(selected):
     criterion = Registers.metric_registry[selected["metric"]]()
     logger.info(f"Criterion: {criterion.name}")
 
+    # train_script
+    if selected["train_script"] == "SingleGPUTrainScript":
+        trainer_cfg["Name"] = "SingleGPUTrainScript"
+        trainer_cfg["device"] = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    trainer = Registers.train_script_registry[selected["train_script"]].from_config(trainer_cfg)
+
     return {
         "model": model,
         "train_loader": train_loader,
         "val_loader": val_loader,
         "optimizer": optimizer,
-        "scheduler": scheduler,
         "loss_fn": loss_fn,
+        "scheduler": scheduler,
         "criterion": criterion,
         "trainer_cfg": trainer_cfg,
+        "trainer": trainer,
     }
 
 
@@ -97,6 +106,10 @@ def main():
     # Show all available components
     logger.info("Summarization of Selected Components:")
     pretty_dict(selected, title="Selected")
+
+    _ = components.pop("trainer_cfg")
+    trainer = components.pop("trainer")
+    trainer.train(**components)
 
     # TODO: Initialize trainer and start training
 

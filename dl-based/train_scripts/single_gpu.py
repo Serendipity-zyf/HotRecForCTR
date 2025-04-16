@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 from typing import Any
 from typing import Dict
 from typing import Tuple
@@ -66,61 +67,62 @@ class SingleGPUTrainScript(object):
         best_model_state = None
         patience = 3  # Early stopping patience
 
-        with ProgressBar(total=self.epochs, title="Training") as bar_epoch:
-            for epoch in range(1, self.epochs + 1):
-                # Training phase
-                model.train()
-                train_loss = self._train_epoch(
-                    model=model,
-                    train_loader=train_loader,
-                    optimizer=optimizer,
-                    loss_fn=loss_fn,
-                    epoch=epoch,
-                )
+        # Use simple log output instead of outer ProgressBar
+        logger.info(f"\n{'='*50}\nStarting training, total epochs: {self.epochs}\n{'='*50}")
+        for epoch in range(1, self.epochs + 1):
+            # Training phase
+            model.train()
+            train_loss = self._train_epoch(
+                model=model,
+                train_loader=train_loader,
+                optimizer=optimizer,
+                loss_fn=loss_fn,
+                epoch=epoch,
+            )
 
-                # Validation phase
-                model.eval()
-                val_loss, metric = self._validate_epoch(
-                    model=model,
-                    val_loader=val_loader,
-                    loss_fn=loss_fn,
-                    criterion=criterion,
-                    epoch=epoch,
-                )
+            # Validation phase
+            model.eval()
+            val_loss, metric = self._validate_epoch(
+                model=model,
+                val_loader=val_loader,
+                loss_fn=loss_fn,
+                criterion=criterion,
+                epoch=epoch,
+            )
 
-                # Early stopping check
-                if epoch == 1:
+            # Early stopping check
+            if epoch == 1:
+                self.best_metric = metric
+                best_model_state = model.state_dict()
+            else:
+                if metric > self.best_metric:
                     self.best_metric = metric
                     best_model_state = model.state_dict()
+                    self.early_stop_times = 0
                 else:
-                    if metric > self.best_metric:
-                        self.best_metric = metric
-                        best_model_state = model.state_dict()
-                        self.early_stop_times = 0
-                    else:
-                        self.early_stop_times += 1
-                        logger.warning(
-                            f"Validation metric did not improve for {self.early_stop_times} epochs"
-                        )
-
-                # Update learning rate if scheduler is enabled
-                if self.is_scheduler:
-                    scheduler.step()
-
-                # Update progress bar
-                bar_epoch(
-                    text=(
-                        f"Epoch [{epoch}/{self.epochs}] | "
-                        f"Train Loss: {train_loss:.4f} | "
-                        f"Val Loss: {val_loss:.4f} | "
-                        f"Metric: {metric:.4f}"
+                    self.early_stop_times += 1
+                    logger.warning(
+                        f"Validation metric did not improve for {self.early_stop_times} epochs"
                     )
-                )
 
-                # Early stopping
-                if self.early_stop_times >= patience:
-                    logger.info(f"Early stopping triggered after {epoch} epochs")
-                    break
+            # Update learning rate if scheduler is enabled
+            if self.is_scheduler:
+                scheduler.step()
+
+            # Use log output instead of progress bar update
+            logger.info(
+                f"\n{'*'*50}\n"
+                f"Epoch [{epoch}/{self.epochs}] | "
+                f"Train Loss: {train_loss:.4f} | "
+                f"Val Loss: {val_loss:.4f} | "
+                f"Metric: {metric:.4f}\n"
+                f"{'*'*50}"
+            )
+
+            # Early stopping
+            if self.early_stop_times >= patience:
+                logger.info(f"Early stopping triggered after {epoch} epochs")
+                break
 
         # Restore best model
         if best_model_state is not None:
@@ -138,7 +140,9 @@ class SingleGPUTrainScript(object):
         """Train for one epoch."""
         epoch_losses = []
 
-        with ProgressBar(total=len(train_loader), title=f"Epoch {epoch}") as bar:
+        # Use ProgressBar for inner loop
+        logger.info(f"\n{'-'*20} Training Epoch {epoch} {'-'*20}")
+        with ProgressBar(total=len(train_loader), title=f"Training") as bar:
             for batch in train_loader:
                 # Move data to device
                 dense_x, discrete_x, label = [x.to(self.device) for x in batch]
@@ -157,8 +161,9 @@ class SingleGPUTrainScript(object):
                 current_loss = loss.item()
                 epoch_losses.append(current_loss)
 
-                # Update progress bar
-                bar(text=f"loss: {current_loss:.4f}")
+                # Update progress bar with current loss
+                bar.text = f"Batch Loss: {current_loss:.4f}"
+                bar()
 
         avg_loss = sum(epoch_losses) / len(train_loader)
         self.train_loss.append(avg_loss)
@@ -178,10 +183,9 @@ class SingleGPUTrainScript(object):
         predictions = []
         targets = []
 
-        with (
-            torch.inference_mode(),
-            ProgressBar(total=len(val_loader), title=f"Validation {epoch}") as bar,
-        ):
+        # Use ProgressBar for validation loop
+        logger.info(f"\n{'-'*20} Validating Epoch {epoch} {'-'*20}")
+        with torch.inference_mode(), ProgressBar(total=len(val_loader), title=f"Validation") as bar:
             for batch in val_loader:
                 # Move data to device
                 dense_x, discrete_x, label = [x.to(self.device) for x in batch]
@@ -195,6 +199,8 @@ class SingleGPUTrainScript(object):
                 targets.append(label.cpu())
                 val_losses.append(loss.item())
 
+                # Update progress bar with current loss
+                bar.text = f"Batch Loss: {loss.item():.4f}"
                 bar()
 
         # Calculate metrics
@@ -205,9 +211,7 @@ class SingleGPUTrainScript(object):
 
         # Record validation loss
         self.val_loss.append(avg_loss)
-        logger.info(
-            f"Epoch {epoch} validation - Loss: {avg_loss:.4f}, Metric: {metric:.4f}"
-        )
+        logger.info(f"Epoch {epoch} validation - Loss: {avg_loss:.4f}, Metric: {metric:.4f}")
 
         return avg_loss, metric
 
