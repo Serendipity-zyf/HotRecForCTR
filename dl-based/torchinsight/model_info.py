@@ -19,6 +19,7 @@ from .utils import (
     calculate_macs,
     calculate_flops,
     get_input_output_sizes,
+    track_parameter_usage,
 )
 
 from .formatter import (
@@ -85,6 +86,7 @@ class ModelAnalyzer:
         self.total_memory = 0
         self.module_info = {}
         self.input_output_sizes = {}
+        self.param_usage = {}
 
         # For memory tracking
         self.input_memory_size = 0
@@ -93,6 +95,9 @@ class ModelAnalyzer:
         # For tree structure tracking
         self.module_depth_idx = {}
         self.depth_counts = {}
+
+        # For direct parameter tracking
+        self.direct_params = {}
 
     def analyze(
         self,
@@ -185,6 +190,9 @@ class ModelAnalyzer:
         if input_data is not None:
             self.input_output_sizes = get_input_output_sizes(self.model, input_data, self.device)
 
+            # Track parameter usage during forward pass
+            self.param_usage = track_parameter_usage(self.model, input_data, self.device)
+
             # Calculate input data memory size
             if isinstance(input_data, (list, tuple)):
                 self.input_memory_size = sum(x.nelement() * x.element_size() for x in input_data)
@@ -249,13 +257,28 @@ class ModelAnalyzer:
                             elements *= dim
                         self.activation_memory_size += elements * bytes_per_element
 
+            # Check for trainable parameters, including those created with torch.nn.Parameter
+            is_trainable = any(p.requires_grad for p in module.parameters())
+
+            # Also check for directly assigned torch.nn.Parameter attributes
+            registered_params = set(id(p) for p in module.parameters())
+            for attr_name in dir(module):
+                if attr_name.startswith("_") or callable(getattr(module, attr_name)):
+                    continue
+
+                attr = getattr(module, attr_name)
+                if isinstance(attr, torch.nn.Parameter) and id(attr) not in registered_params:
+                    if attr.requires_grad:
+                        is_trainable = True
+                        break
+
             # Store module info
             self.module_info[name] = {
                 "module": module,
                 "type": module.__class__.__name__,
                 "params": params,
                 "trainable_params": trainable_params,
-                "trainable": any(p.requires_grad for p in module.parameters()),
+                "trainable": is_trainable,
                 "input_size": input_size,
                 "output_size": output_size,
                 "macs": macs,
@@ -435,8 +458,41 @@ class ModelAnalyzer:
                             full_children.append(module_name)
                             break
 
-            for i, child in enumerate(full_children):
-                is_last = i == len(full_children) - 1
+            # Add direct parameters that are used in forward pass
+            direct_params = []
+            for param_name, param_info in self.param_usage.items():
+                # Only include parameters that are direct attributes of the model (not part of modules)
+                if "." not in param_name and param_name not in self.module_info:
+                    direct_params.append((param_name, param_info))
+
+            # Sort direct parameters by their execution order
+            direct_params.sort(key=lambda x: x[1].get("execution_order", 999999))
+
+            # Combine modules and direct parameters
+            all_children = full_children.copy()
+
+            # Add direct parameters as pseudo-modules
+            for param_name, param_info in direct_params:
+                # Create a pseudo-module entry for this parameter
+                self.module_info[f"_param_{param_name}"] = {
+                    "type": "Parameter",
+                    "params": param_info["param"].numel(),
+                    "trainable_params": (
+                        param_info["param"].numel() if param_info["trainable"] else 0
+                    ),
+                    "trainable": param_info["trainable"],
+                    "input_size": None,
+                    "output_size": param_info["shape"],
+                    "macs": 0,
+                    "flops": 0,
+                    "memory": param_info["param"].nelement() * param_info["param"].element_size(),
+                    "depth_idx": f"1-{len(direct_params)}",
+                    "param_name": param_name,  # Store the original parameter name
+                }
+                all_children.append(f"_param_{param_name}")
+
+            for i, child in enumerate(all_children):
+                is_last = i == len(all_children) - 1
                 child_lines = self._format_module_tree_recursive(
                     child, depth + 1, max_depth, is_last, prefix_dict.copy(), col_widths
                 )
@@ -474,7 +530,11 @@ class ModelAnalyzer:
         depth_idx = info["depth_idx"]
 
         # Get the short name (last part of the full name)
-        short_name = name.split(".")[-1]
+        if name.startswith("_param_") and "param_name" in info:
+            # This is a direct parameter
+            short_name = info["param_name"]
+        else:
+            short_name = name.split(".")[-1]
 
         # Format the line with tree structure
         module_name = format_layer_name(
@@ -575,7 +635,26 @@ class ModelAnalyzer:
         forward_backward_size = (
             self.activation_memory_size * 2
         )  # Account for both activations and gradients
-        params_size = sum(p.nelement() * p.element_size() for p in self.model.parameters())
+
+        # Calculate parameter memory including torch.nn.Parameter attributes
+        params_size = 0
+        registered_params = set()
+
+        # Count registered parameters
+        for param in self.model.parameters():
+            params_size += param.nelement() * param.element_size()
+            registered_params.add(id(param))
+
+        # Count parameters that might be directly assigned as attributes but not registered
+        for attr_name in dir(self.model):
+            # Skip special attributes, methods, and already counted parameters
+            if attr_name.startswith("_") or callable(getattr(self.model, attr_name)):
+                continue
+
+            attr = getattr(self.model, attr_name)
+            if isinstance(attr, torch.nn.Parameter) and id(attr) not in registered_params:
+                params_size += attr.nelement() * attr.element_size()
+
         total_size = params_size + input_size + forward_backward_size
 
         lines.append(f"{MEMORY_COLOR}Input size:{Style.RESET_ALL} {format_bytes(input_size)}")
@@ -586,7 +665,7 @@ class ModelAnalyzer:
         lines.append(
             f"{MEMORY_COLOR}Estimated Total Size:{Style.RESET_ALL} {format_bytes(total_size)}"
         )
-
+        lines.append(create_separator(col_widths))
         return "\n".join(lines)
 
     def print_summary(self, max_depth: int = 3) -> None:

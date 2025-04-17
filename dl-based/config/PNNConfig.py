@@ -19,7 +19,7 @@ class PNNConfig(BaseModelConfig):
     Name: Literal["PNN"] = "PNN"
     feature_dims: List[PositiveInt]
     dense_feature_dim: Optional[PositiveInt] = None
-    embed_dim: PositiveInt = 8
+    embed_dim: PositiveInt = 16
     hidden_size: PositiveInt = 64
     units: PositiveInt = 32
     is_inner: bool = True
