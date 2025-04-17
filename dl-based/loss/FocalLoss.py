@@ -39,6 +39,11 @@ class FocalLoss(BaseLoss):
         if target.dtype != pred.dtype:
             target = target.float()
 
+        if pred.dim() > target.dim():
+            pred = pred.squeeze(-1)
+        elif pred.dim() < target.dim():
+            pred = pred.unsqueeze(-1)
+
         bce_loss = F.binary_cross_entropy_with_logits(pred, target, reduction="none")
         pred_prob = torch.sigmoid(pred)
         # Calculate Probability for Focal Loss Weights

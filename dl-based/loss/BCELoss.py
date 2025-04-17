@@ -37,6 +37,11 @@ class BCELoss(BaseLoss):
         if target.dtype != pred.dtype:
             target = target.float()
 
+        if pred.dim() > target.dim():
+            pred = pred.squeeze(-1)
+        elif pred.dim() < target.dim():
+            pred = pred.unsqueeze(-1)
+
         pos_weight = torch.tensor([self.pos_weight_value], device=pred.device)
         loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction=self.reduction)
         return loss_fn(pred, target)

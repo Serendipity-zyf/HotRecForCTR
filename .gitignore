@@ -82,8 +82,13 @@ checkpoints/
 *.mov
 *.wmv
 
-# wandb
+# wandb - ignore all wandb related files and directories
 wandb/
+**/wandb/
+*.wandb
+wandb-debug.log
+wandb-metadata.json
+wandb-summary.json
 
 # special .sh
 git-sync.sh
