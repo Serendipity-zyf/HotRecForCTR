@@ -82,5 +82,8 @@ checkpoints/
 *.mov
 *.wmv
 
+# wandb
+wandb/
+
 # special .sh
 git-sync.sh

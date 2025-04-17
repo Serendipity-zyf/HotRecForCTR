@@ -32,8 +32,8 @@ FMOptimizerConfig = OptimizerConfig(
 
 FMSchedulerConfig = SchedulerConfig(
     type="StepLR",
-    step_size=5,
-    gamma=0.8,
+    step_size=10,
+    gamma=0.9,
 )
 
 
@@ -42,7 +42,7 @@ class FMTrainerConfig(BaseTrainerConfig):
     """Configuration for FM trainer."""
 
     Name: Literal["FMCTR"] = "FMCTR"
-    epochs: PositiveInt = 20
+    epochs: PositiveInt = 30
     train_batch_size: PositiveInt = 512
     test_batch_size: PositiveInt = 1024
     grad_clip: PositiveFloat = 1.0

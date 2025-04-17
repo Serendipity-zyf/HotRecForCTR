@@ -174,7 +174,7 @@ class SingleGPUTrainScript(object):
         # Calculate and record average loss
         avg_loss = sum(epoch_losses) / len(train_loader)
         if self.wdb:
-            self.wdb.log({"train_loss": avg_loss})
+            self.wdb.log({"train_loss": avg_loss}, step=epoch)
         self.train_loss.append(avg_loss)
         logger.info(f"Epoch {epoch} average train loss: {avg_loss:.4f}")
         return avg_loss
@@ -220,7 +220,7 @@ class SingleGPUTrainScript(object):
 
         # Record validation loss
         if self.wdb:
-            self.wdb.log({"val_loss": avg_loss, f"{criterion.name}": metric})
+            self.wdb.log({"val_loss": avg_loss, f"{criterion.name}": metric}, step=epoch)
         self.val_loss.append(avg_loss)
         logger.info(f"Epoch {epoch} validation - Loss: {avg_loss:.4f}, Metric: {metric:.4f}")
 

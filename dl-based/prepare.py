@@ -43,7 +43,7 @@ def setup_components(selected: Dict) -> tuple[Dict[str, Any], Dict[str, Any]]:
     print(
         analyze_model(
             model,
-            model_name="FMCTR",
+            model_name=model.name if hasattr(model, "name") else selected["model"],
             input_dims=[(dense_feature_dim,), (len(feature_dims),)],
             long_indices=[1],
             batch_size=train_batch_size,
