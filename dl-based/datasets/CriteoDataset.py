@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import pandas as pd
 
 from typing import Any
@@ -82,6 +83,9 @@ class CriteoDataset(Dataset):
             logger.info(f"Using StandardScaler.")
             self.scaler = StandardScaler()
             dense_x = self.scaler.fit_transform(dense_x)
+        elif self.scaled == "LogScaler":
+            logger.info(f"Using log scaling.")
+            dense_x = np.where(dense_x > -1, np.log(dense_x + 1), -1)
         else:
             logger.info(f"Using no scaler.")
 

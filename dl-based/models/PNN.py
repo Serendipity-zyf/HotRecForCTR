@@ -40,7 +40,7 @@ class PNN(nn.Module):
         self.units = units
         self.is_inner = is_inner
         self.is_outer = is_outer
-        self.num_features = len(feature_dims) + 1  # +1 for dense feature
+        self.num_features = len(feature_dims) + 1
         self.dense_layer = nn.Linear(dense_feature_dim, embed_dim)
         self.embeddings = nn.ModuleList([nn.Embedding(dim, embed_dim) for dim in feature_dims])
         self.W_z = nn.Linear(self.num_features * embed_dim, units, bias=False)
