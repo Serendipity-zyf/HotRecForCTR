@@ -1,0 +1,98 @@
+# Ignore .parquet files in data folder
+data/**/*.parquet
+data/**/*.txt
+data/**/*.gz
+data/**/*.jsonl
+data/**/*.json
+data/amazon/statistic/
+# Ignore .pkl files in data folder
+data/**/*.pkl
+
+# Ignore criteo folder
+data/criteo/
+criteo/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual environments
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Local configuration
+config.local.ini
+*.local.json
+*.local.yaml
+*.local.yml
+
+# Temporary files
+tmp/
+temp/
+.temp/
+.tmp/
+
+# Model checkpoints
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.model
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+# wandb - ignore all wandb related files and directories
+wandb/
+**/wandb/
+*.wandb
+wandb-debug.log
+wandb-metadata.json
+wandb-summary.json
+
+# special .sh
+git-sync.sh
