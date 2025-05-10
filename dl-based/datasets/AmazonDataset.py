@@ -92,12 +92,15 @@ class AmazonDataset(Dataset):
                 iid_idx = torch.tensor(self.item_vocab[iid]).long()
                 seq_idx = self.item_vocab[seq.split("<sep>")]
                 valid_len = torch.tensor(len(seq_idx)).long()
+
                 seq_idx = torch.tensor(seq_idx).long() if seq_idx else torch.tensor([0]).long()
                 item_info = self.item_info[iid]
-                dense_feature = [item_info["average_rating"], item_info["rating_number"]]
                 label = torch.tensor(int(label)).long()
+
                 self.X.append((uid_idx, iid_idx, seq_idx, valid_len))
                 self.y.append(label)
+
+                dense_feature = [item_info["average_rating"], item_info["rating_number"]]
                 dense_feature_list.append(dense_feature)
                 pbar()
 
@@ -136,8 +139,8 @@ class AmazonDataset(Dataset):
         dense = torch.stack([item[1] for item in batch], dim=0)
         label = torch.stack([item[2] for item in batch], dim=0)
 
-        uid_idx = torch.stack(uid_idx, dim=0).unsqueeze(1)
-        iid_idx = torch.stack(iid_idx, dim=0).unsqueeze(1)
+        uid_idx = torch.stack(uid_idx, dim=0)
+        iid_idx = torch.stack(iid_idx, dim=0)
         seq_idx = torch.nn.utils.rnn.pad_sequence(seq_idx, batch_first=True, padding_value=PADING_VALUE)
         valid_len = torch.stack(valid_len, dim=0)
         max_len = torch.max(valid_len).item()
