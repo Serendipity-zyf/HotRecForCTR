@@ -110,10 +110,12 @@ class AmazonDataset(Dataset):
                 ]
                 seq_cat_idx = torch.tensor(seq_item_info).long() if seq_idx else torch.tensor([0]).long()
                 seq_idx = torch.tensor(seq_idx).long() if seq_idx else torch.tensor([0]).long()
-                item_info = self.item_info[iid]
-                label = torch.tensor(int(label)).long()
 
-                self.X.append((uid_idx, iid_idx, seq_idx, seq_cat_idx, valid_len))
+                label = torch.tensor(int(label)).long()
+                item_info = self.item_info[iid]
+                cate_idx = torch.tensor(self.category_vocab[item_info["category"]]).long()
+
+                self.X.append((uid_idx, iid_idx, cate_idx, seq_idx, seq_cat_idx, valid_len))
                 self.y.append(label)
 
                 dense_feature = [item_info["average_rating"], item_info["rating_number"]]
@@ -151,12 +153,13 @@ class AmazonDataset(Dataset):
     def collate_fn(batch: List[Tuple[torch.Tensor, ...]]) -> Tuple[torch.Tensor, ...]:
         """Custom collate function to handle variable-length sequences."""
         PADING_VALUE = 0
-        uid_idx, iid_idx, seq_idx, seq_cat_idx, valid_len = zip(*[item[0] for item in batch])
+        uid_idx, iid_idx, cate_idx, seq_idx, seq_cat_idx, valid_len = zip(*[item[0] for item in batch])
         dense = torch.stack([item[1] for item in batch], dim=0)
         label = torch.stack([item[2] for item in batch], dim=0)
 
         uid_idx = torch.stack(uid_idx, dim=0)
         iid_idx = torch.stack(iid_idx, dim=0)
+        cate_idx = torch.stack(cate_idx, dim=0)
         seq_idx = torch.nn.utils.rnn.pad_sequence(seq_idx, batch_first=True, padding_value=PADING_VALUE)
         seq_cat_idx = torch.nn.utils.rnn.pad_sequence(
             seq_cat_idx, batch_first=True, padding_value=PADING_VALUE
@@ -165,7 +168,7 @@ class AmazonDataset(Dataset):
         max_len = torch.max(valid_len).item()
         mask = torch.arange(max_len).expand(len(valid_len), max_len) < valid_len
 
-        return (uid_idx, iid_idx, seq_idx, seq_cat_idx, mask), dense, label
+        return (uid_idx, iid_idx, cate_idx, seq_idx, seq_cat_idx, mask), dense, label
 
     @staticmethod
     def get_dataloader(
