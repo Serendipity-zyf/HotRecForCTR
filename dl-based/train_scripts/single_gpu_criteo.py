@@ -15,12 +15,12 @@ from utils.register import Registers
 from utils.progress import ProgressBar
 from utils.register import build_from_config
 
-logger = ColorLogger(name="TrainScript")
+logger = ColorLogger(name="TrainScriptCriteo")
 
 
 @Registers.train_script_registry.register
-class SingleGPUTrainScript(object):
-    """Single GPU / CPU training script."""
+class SingleGPUTrainScriptCriteo(object):
+    """Single GPU / CPU training script for Criteo Dataset."""
 
     def __init__(
         self,
@@ -32,7 +32,7 @@ class SingleGPUTrainScript(object):
         patience: int,
         device: str,
     ):
-        self.name = "SingleGPUTrainScript"
+        self.name = "SingleGPUTrainScriptCriteo"
         self.epochs = epochs
         self.train_batch_size = train_batch_size
         self.test_batch_size = test_batch_size
@@ -233,6 +233,6 @@ class SingleGPUTrainScript(object):
         torch.save(model.state_dict(), path)
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "SingleGPUTrainScript":
+    def from_config(cls, config: Dict[str, Any]) -> "SingleGPUTrainScriptCriteo":
         """Create model from config."""
         return build_from_config(config, Registers.train_script_registry)

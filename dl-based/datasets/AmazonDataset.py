@@ -149,6 +149,18 @@ class AmazonDataset(Dataset):
     def __getitem__(self, idx) -> Tuple[torch.Tensor, ...]:
         return self.X[idx], self.dense[idx], self.y[idx]
 
+    @property
+    def user_num(self) -> int:
+        return len(self.uid_vocab)
+
+    @property
+    def item_num(self) -> int:
+        return len(self.item_vocab)
+
+    @property
+    def cate_num(self) -> int:
+        return len(self.category_vocab)
+
     @staticmethod
     def collate_fn(batch: List[Tuple[torch.Tensor, ...]]) -> Tuple[torch.Tensor, ...]:
         """Custom collate function to handle variable-length sequences."""

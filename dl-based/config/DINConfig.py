@@ -17,20 +17,19 @@ class DINConfig(BaseModelConfig):
     """Configuration for DIN model."""
 
     Name: Literal["DIN"] = "DIN"
-    feature_dims: List[PositiveInt]
-    dense_feature_dims: Optional[PositiveInt] = None
+    user_num: PositiveInt
+    item_num: PositiveInt
+    cate_num: PositiveInt
     embed_dim: PositiveInt = 16
-    hidden_size: PositiveInt = 400
-    dnn_layers: PositiveInt = 3
-    dropout_rate: PositiveFloat = 0.0
-    interact_feature_nums: Optional[PositiveInt] = None
-    is_interact: bool = True
+    hidden_size: PositiveInt = 200
+    dense_nums: PositiveInt = 2
+    use_attn: bool = False
 
 
 DINOptimizerConfig = OptimizerConfig(
     Name="Adam",
-    embed_weight_decay=1e-6,
-    dense_weight_decay=5e-5,
+    embed_weight_decay=1e-4,
+    dense_weight_decay=1e-4,
     learning_rate=1e-3,
     betas=(0.9, 0.999),
     eps=1e-8,
@@ -39,7 +38,7 @@ DINOptimizerConfig = OptimizerConfig(
 
 DINSchedulerConfig = SchedulerConfig(
     Name="StepLR",
-    step_size=5,
+    step_size=1,
     gamma=0.9,
 )
 
@@ -50,8 +49,8 @@ class DINTrainerConfig(BaseTrainerConfig):
 
     Name: Literal["DIN"] = "DIN"
     epochs: PositiveInt = 50
-    train_batch_size: PositiveInt = 2
-    test_batch_size: PositiveInt = 2
+    train_batch_size: PositiveInt = 32
+    test_batch_size: PositiveInt = 64
     grad_clip: PositiveFloat = 1.0
     patience: PositiveInt = 5
     device: Union[Literal["cpu", "cuda", "auto"], str, List[str]] = "cuda:0"

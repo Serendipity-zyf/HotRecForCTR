@@ -56,6 +56,14 @@ def setup_components(selected: Dict) -> tuple[Dict[str, Any], Dict[str, Any]]:
             dense_feature_dims=dense_feature_dims,
             interact_feature_nums=interact_feature_nums,
         )
+    elif selected["dataset"] == "AmazonDataset":
+        user_num = train_dataset.user_num
+        item_num = train_dataset.item_num
+        cate_num = train_dataset.cate_num
+        model_cfg = Registers.model_config_registry[selected["model_config"]](
+            user_num=user_num, item_num=item_num, cate_num=cate_num
+        )
+
     trainer_cfg = Registers.trainer_config_registry[selected["trainer_config"]]().to_dict()
     train_batch_size = trainer_cfg["train_batch_size"]
     test_batch_size = trainer_cfg["test_batch_size"]
@@ -85,10 +93,20 @@ def setup_components(selected: Dict) -> tuple[Dict[str, Any], Dict[str, Any]]:
                 batch_size=train_batch_size,
             )
         )
+    elif selected["dataset"] == "AmazonDataset":
+        test_sample = next(iter(train_loader))
+        print(
+            analyze_model(
+                model,
+                model_name=model.name if hasattr(model, "name") else selected["model"],
+                input_data=[*test_sample[0], test_sample[1]],
+                device=trainer_cfg["device"],
+            )
+        )
     # Optimizer
     optimizer_cfg = trainer_cfg.pop("optimizer")
-    embed_weight_decay = optimizer_cfg.pop("embed_weight_decay", 1e-6)
-    dense_weight_decay = optimizer_cfg.pop("dense_weight_decay", 5e-5)
+    embed_weight_decay = optimizer_cfg.pop("embed_weight_decay", 1e-4)
+    dense_weight_decay = optimizer_cfg.pop("dense_weight_decay", 1e-4)
     model_params = get_param_groups_by_type(
         model, embed_weight_decay=embed_weight_decay, dense_weight_decay=dense_weight_decay
     )
@@ -118,8 +136,10 @@ def setup_components(selected: Dict) -> tuple[Dict[str, Any], Dict[str, Any]]:
     logger.info(f"Criterion: {criterion.name}")
 
     # train_script
-    if selected["train_script"] == "SingleGPUTrainScript":
-        trainer_cfg["Name"] = "SingleGPUTrainScript"
+    if selected["train_script"] == "SingleGPUTrainScriptCriteo":
+        trainer_cfg["Name"] = "SingleGPUTrainScriptCriteo"
+    elif selected["train_script"] == "SingleGPUTrainScriptAmazon":
+        trainer_cfg["Name"] = "SingleGPUTrainScriptAmazon"
         # trainer_cfg["device"] = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     trainer = Registers.train_script_registry[selected["train_script"]].from_config(trainer_cfg)
 
