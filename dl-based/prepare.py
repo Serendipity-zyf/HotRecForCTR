@@ -24,11 +24,13 @@ def setup_components(selected: Dict) -> tuple[Dict[str, Any], Dict[str, Any]]:
         test_data_path = "../data/amazon/test/test_data.txt"
         user_vocab_path = "../data/amazon/statistic/user_vocab.json"
         item_vocab_path = "../data/amazon/statistic/item_vocab.json"
+        category_vocab_path = "../data/amazon/statistic/category_vocab.json"
         item_info_path = "../data/amazon/item/item_info.pkl"
         train_dataset = Registers.dataset_registry[selected["dataset"]](
             data_path=train_data_path,
             user_vocab_path=user_vocab_path,
             item_vocab_path=item_vocab_path,
+            category_vocab_path=category_vocab_path,
             item_info_path=item_info_path,
             scaled="LogScaler",
         )
@@ -36,8 +38,10 @@ def setup_components(selected: Dict) -> tuple[Dict[str, Any], Dict[str, Any]]:
             data_path=test_data_path,
             user_vocab_path=user_vocab_path,
             item_vocab_path=item_vocab_path,
+            category_vocab_path=category_vocab_path,
             uid_vocab=train_dataset.uid_vocab,
             item_vocab=train_dataset.item_vocab,
+            category_vocab=train_dataset.category_vocab,
             item_info_path=item_info_path,
             scaled="LogScaler",
         )
