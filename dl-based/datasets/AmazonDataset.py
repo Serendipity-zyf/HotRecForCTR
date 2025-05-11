@@ -75,7 +75,7 @@ class AmazonDataset(Dataset):
     def _load_data(self) -> List[str]:
         logger.info(f"Loading {self.data_type} data from {self.data_path}")
         with open(self.data_path, "r") as f:
-            txt_data = f.readlines()[:1000]
+            txt_data = f.readlines()
         return txt_data
 
     def _load_vocab(self) -> Tuple[UIDVocab, ...]:
@@ -102,14 +102,20 @@ class AmazonDataset(Dataset):
                 uid, iid, seq, label = line.strip().split("\t")
                 uid_idx = torch.tensor(self.uid_vocab[uid]).long()
                 iid_idx = torch.tensor(self.item_vocab[iid]).long()
-                seq_idx = self.item_vocab[seq.split("<sep>")]
-                valid_len = torch.tensor(len(seq_idx)).long()
 
-                seq_item_info = self.category_vocab[
-                    [self.item_info[seq_id]["category"] for seq_id in seq_idx]
-                ]
-                seq_cat_idx = torch.tensor(seq_item_info).long() if seq_idx else torch.tensor([0]).long()
-                seq_idx = torch.tensor(seq_idx).long() if seq_idx else torch.tensor([0]).long()
+                seq_items = seq.split("<sep>") if seq else []
+                if seq_items:
+                    seq_item_info = self.category_vocab[
+                        [self.item_info[item_asin]["category"] for item_asin in seq_items]
+                    ]
+                    seq_cat_idx = torch.tensor(seq_item_info).long()
+                    seq_idx = self.item_vocab[seq_items]
+                    seq_idx = torch.tensor(seq_idx).long()
+                    valid_len = torch.tensor(len(seq_items)).long()
+                else:
+                    seq_cat_idx = torch.tensor([0]).long()
+                    seq_idx = torch.tensor([0]).long()
+                    valid_len = torch.tensor(0).long()
 
                 label = torch.tensor(int(label)).long()
                 item_info = self.item_info[iid]
@@ -178,7 +184,7 @@ class AmazonDataset(Dataset):
         )
         valid_len = torch.stack(valid_len, dim=0)
         max_len = torch.max(valid_len).item()
-        mask = torch.arange(max_len).expand(len(valid_len), max_len) < valid_len
+        mask = torch.arange(max_len).unsqueeze(0) < valid_len.unsqueeze(1)
 
         return (uid_idx, iid_idx, cate_idx, seq_idx, seq_cat_idx, mask), dense, label
 
