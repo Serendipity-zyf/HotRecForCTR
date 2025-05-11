@@ -200,7 +200,7 @@ class SingleGPUTrainScriptAmazon(object):
         # Use ProgressBar for validation loop
         logger.info(f"\n{'-'*35} Validating Epoch {epoch} {'-'*35}")
         with torch.inference_mode(), ProgressBar(total=len(val_loader), title=f"Validation") as bar:
-            for batch in train_loader:
+            for batch in val_loader:
                 # Move data to device
                 (uid_idx, iid_idx, cate_idx, seq_idx, seq_cat_idx, mask), dense, label = (
                     [x.to(self.device) for x in batch[0]],

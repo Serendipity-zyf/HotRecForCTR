@@ -1,3 +1,4 @@
-from .single_gpu import SingleGPUTrainScript
+from .single_gpu_criteo import SingleGPUTrainScriptCriteo
+from .single_gpu_amazon import SingleGPUTrainScriptAmazon
 
-__all__ = ["SingleGPUTrainScript"]
+__all__ = ["SingleGPUTrainScriptCriteo", "SingleGPUTrainScriptAmazon"]
