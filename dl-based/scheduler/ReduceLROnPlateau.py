@@ -30,6 +30,13 @@ class ReduceLROnPlateau(ReduceLROnPlateau):
         eps: float = 1e-8,
         verbose: bool = False,
     ):
+        # Ensure min_lr is properly set for all parameter groups
+        if isinstance(min_lr, (list, tuple)):
+            if len(min_lr) != len(optimizer.param_groups):
+                raise ValueError(f"Expected {len(optimizer.param_groups)} min_lrs, got {len(min_lr)}")
+        else:
+            min_lr = [min_lr] * len(optimizer.param_groups)
+
         super().__init__(
             optimizer=optimizer,
             mode=mode,
@@ -59,4 +66,7 @@ class ReduceLROnPlateau(ReduceLROnPlateau):
             "eps": config.get("eps", 1e-8),
             "verbose": config.get("verbose", False),
         }
+        # Ensure min_lr is not None
+        if scheduler_params["min_lr"] is None:
+            scheduler_params["min_lr"] = 0
         return cls(optimizer, **scheduler_params)
